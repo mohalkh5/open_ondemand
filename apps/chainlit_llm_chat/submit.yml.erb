@@ -1,0 +1,58 @@
+<%-
+
+  # Initialize an empty array to hold Slurm arguments
+  base_slurm_args = []
+
+  # fill Slurm array based on config_type
+  if config_type == "presets"
+
+    # set shared Slurm directives 
+    base_slurm_args += ["--nodes=1", "--partition=atesting_a100", "--qos=testing"]
+
+    case preset_configuration
+      # set tasks and time based on provided selection 
+      when "10x1x1alpine"
+        base_slurm_args += ["--ntasks=10", "--time=1:00:00", "--gres=gpu"]
+      else
+	base_slurm_args
+      end
+
+  end
+
+-%>
+---
+
+<% if config_type == "presets" -%>
+
+# if presets set cluster to Alpine and use base_slurm_args to set Slurm directives 
+cluster: "alpine"
+script:
+  copy_environment: true
+  native:
+    <% base_slurm_args.each do |arg| %>
+      - <%= arg %>
+    <% end %>
+
+<% else -%>
+
+# set Slurm directives based on provided custom configurations 
+script:
+  copy_environment: true
+  native:
+    - "--nodes=1"
+    - "--ntasks=<%= num_cores %>"
+    - "--account=<%= account %>"
+    - "--partition=<%= partition_name %>"
+    - "--qos=<%= qos_name %>"
+    - "--time=<%= num_hours %>:00:00"
+    <% if reservation.downcase != "none" %>
+    - "--reservation=<%= reservation %>"
+    <% end %>
+    <% if gres.downcase != "none" %>
+    - "--gres=<%= gres %>"
+    <% end %>
+
+<% end -%>
+
+batch_connect:
+  template: "basic"
