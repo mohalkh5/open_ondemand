@@ -59,7 +59,7 @@ async def chat_profiles():
         profiles.append(
             cl.ChatProfile(
                 name=model["name"],
-                markdown_description=f"{model['display_name']}\n\n{model['description']}",
+                markdown_description=model['description'],
             )
         )
     return profiles
@@ -186,9 +186,9 @@ async def on_message(message: cl.Message):
     additional_context, images = process_uploaded_files(message.elements)
     
     # Check if images are uploaded but model doesn't support vision
-    if images and not model_info.get("vision", False):
+    if images and "vision" not in model_info.get("capabilities"):
         await cl.Message(
-            content=f"⚠️ You uploaded images, but **{model}** doesn't support vision. "
+            content=f"⚠️ **{model}** doesn't support vision. "
                     f"Please switch to a vision-capable model using the model selector."
         ).send()
         return
@@ -200,7 +200,7 @@ async def on_message(message: cl.Message):
     
     # Build the message for Ollama
     user_message = {"role": "user", "content": user_content}
-    if images and model_info.get("vision", False):
+    if images and "vision" in model_info.get("capabilities", []):
         user_message["images"] = images
     
     message_history.append(user_message)
