@@ -18,5 +18,6 @@ export CHAINLIT_DATA_DIR="/projects/${USER}/.chainlit_data"
 
 sleep 5 
 
-chainlit run --root-path /node/${host}/${port} --port $port --debug --host $(hostname -I) bin/app.py
+cd bin 
+chainlit run --root-path /node/${host}/${port} --port $port --debug --host $(hostname -I) app.py
 
