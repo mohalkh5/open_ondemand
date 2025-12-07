@@ -9,16 +9,14 @@ source /curc/sw/uv_env/ood-llm-chat-env/bin/activate
 if [[ "<%= context.ollama_model_path %>" == "CURC models" ]]
 then
   ml ollama
-
-  # preload the model so that it is quicker 
-  #curl http://$OLLAMA_HOST/api/generate -d '{
-  #  "model": "gpt-oss:20b"
-  #}'
 else
   export OLLAMA_MODELS=<%= context.ollama_model_path %>; ml ollama
 fi
 
+# Specify location of chat history 
+export CHAINLIT_DATA_DIR="/projects/${USER}/.chainlit_data"
+
 sleep 5 
 
-chainlit run --root-path /node/${host}/${port} --port $port --debug --host $(hostname -I) app.py
+chainlit run --root-path /node/${host}/${port} --port $port --debug --host $(hostname -I) bin/app.py
 
