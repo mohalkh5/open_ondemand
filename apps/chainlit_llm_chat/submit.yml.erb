@@ -1,28 +1,23 @@
 <%-
 
   # Initialize an empty array to hold Slurm arguments
-  base_slurm_args = []
+  #
+  # NOTE: Preset-only mode.
+  # `config_type` is intentionally disabled in `form.yml.erb`, so users cannot
+  # submit custom Slurm directives. Keep the legacy custom branch commented
+  # further down for future restoration.
+  base_slurm_args = ["--nodes=1", "--partition=atesting_a100", "--qos=testing"]
 
-  # fill Slurm array based on config_type
-  if config_type == "presets"
-
-    # set shared Slurm directives 
-    base_slurm_args += ["--nodes=1", "--partition=atesting_a100", "--qos=testing"]
-
-    case preset_configuration
-      # set tasks and time based on provided selection 
-      when "10x1x1alpine"
-        base_slurm_args += ["--ntasks=10", "--time=1:00:00", "--gres=gpu"]
-      else
-	base_slurm_args
-      end
-
+  case preset_configuration
+    # set tasks and time based on provided selection
+    when "10x1x1alpine"
+      base_slurm_args += ["--ntasks=10", "--time=1:00:00", "--gres=gpu:1"]
+    else
+      base_slurm_args
   end
 
 -%>
 ---
-
-<% if config_type == "presets" -%>
 
 # if presets set cluster to Alpine and use base_slurm_args to set Slurm directives 
 cluster: "alpine"
@@ -33,26 +28,41 @@ script:
       - <%= arg %>
     <% end %>
 
-<% else -%>
-
-# set Slurm directives based on provided custom configurations 
-script:
-  copy_environment: true
-  native:
-    - "--nodes=1"
-    - "--ntasks=<%= num_cores %>"
-    - "--account=<%= account %>"
-    - "--partition=<%= partition_name %>"
-    - "--qos=<%= qos_name %>"
-    - "--time=<%= num_hours %>:00:00"
-    <% if reservation.downcase != "none" %>
-    - "--reservation=<%= reservation %>"
-    <% end %>
-    <% if gres.downcase != "none" %>
-    - "--gres=<%= gres %>"
-    <% end %>
-
-<% end -%>
+# ---------------------------------------------------------------------------
+# Archived (disabled): config_type-based preset/custom branching
+# ---------------------------------------------------------------------------
+#
+# <% if config_type == "presets" -%>
+# cluster: "alpine"
+# script:
+#   copy_environment: true
+#   native:
+#     <% base_slurm_args.each do |arg| %>
+#       - <%= arg %>
+#     <% end %>
+# <% else -%>
+# script:
+#   copy_environment: true
+#   native:
+#     - "--nodes=1"
+#     - "--ntasks=<%#= num_cores %>"
+#     - "--account=<%#= account %>"
+#     - "--partition=<%#= partition_name %>"
+#     - "--qos=<%#= qos_name %>"
+#     - "--time=<%#= num_hours %>:00:00"
+#     <%# if reservation.downcase != "none" %>
+#     - "--reservation=<%#= reservation %>"
+#     <%# end %>
+#     <%# if gres.downcase != "none" %>
+#     - "--gres=<%#= gres %>"
+#     <%# end %>
+#     <%# if nodelist.downcase != "none" %>
+#     - "--nodelist=<%#= nodelist %>"
+#     <%# end %>
+#     <%# if constraint.downcase != "none" %>
+#     - "--constraint=<%#= constraint %>"
+#     <%# end %>
+# <% end -%>
 
 batch_connect:
   template: "basic"

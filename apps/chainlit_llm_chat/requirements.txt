@@ -1,13 +1,6 @@
-# Chainlit LLM Chat with Ollama
-# Requirements
-
-# Core
 chainlit>=2.0.0
 ollama>=0.3.0
-
-# Data persistence
 aiosqlite>=0.20.0
-
-# File handling
 Pillow>=10.0.0
 PyPDF2>=3.0.0
+openai>=1.0.0

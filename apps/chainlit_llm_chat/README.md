@@ -1,78 +1,60 @@
-# LLM chat with chainlit application 
+# LLM chatbot (Chainlit) for CURC / Open OnDemand
 
-The following application provides users with a simple LLM chat interface using chainlit and Ollama. 
+This repository packages a Chainlit chat UI that talks to **Ollama**, persists chat history in **SQLite** (via a Chainlit data layer), and is meant to run on **CU Research Computing** resources behind **Open OnDemand**.
 
-## How does it work?
+## How it is launched on CURC
 
-This app launches an Ollama serve, which points to the either the user provided Ollama models or CURC's hosted models. 
-Once the Ollama serve has been established, it then launches chainlit, which points to the Ollama serve using 
-langchain. 
+The OOD batch template runs the app from the `bin` directory:
 
-## Features
-
--   **Local LLM Inference**: Uses Ollama to run models locally, ensuring privacy and offline capability.
--   **Secure Authentication**: Automatic, token-based authentication tied to the system user.
--   **Persistent Chat History**: Chats are saved to a local SQLite database per user.
--   **Multi-Modal Support**: Drag-and-drop support for images (with vision-capable models like Llava) and text files.
--   **Model Management**: Automatically detects available Ollama models and their capabilities (vision support).
-
-## Prerequisites
-
--   **Python 3.9+**
--   **[Ollama](https://ollama.com/)**: Must be installed and running.
-    -   Pull a model to get started: `ollama pull llama3.2`
-
-## Installation
-
-1.  Clone the repository.
-2.  Install dependencies:
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-## Configuration
-
-The application can be configured using environment variables:
-
-| Variable | Description | Default |
-| :--- | :--- | :--- |
-| `OLLAMA_HOST` | Host and port where Ollama is running. | `localhost:11434` |
-| `CHAINLIT_DATA_DIR` | Directory where chat history databases are stored. | `~/.chainlit_data` |
-
-### Example Stand-alone Usage 
 ```bash
-export OLLAMA_HOST="localhost:11434"
-export CHAINLIT_DATA_DIR="/path/to/custom/data"
+cd bin
+chainlit run --root-path /node/${host}/${port} --port $port --debug --host $(hostname -I) app.py
+```
+
+That path is defined in `template/script.sh.erb`. 
+
+## Project layout
+
+```text
+requirements.txt              # Python dependencies (install in your venv on CURC)
+template/
+  script.sh.erb               # OOD job: modules, env, then `cd bin` + `chainlit run app.py`
+  before.sh.erb               # OOD hook (port discovery, etc.)
+  after.sh.erb                # OOD hook (wait for port)
+  bin/
+    app.py                    # Thin entrypoint: logging + re-exports Chainlit callbacks
+    system_prompt.txt         # System prompt for the model
+    chainlit.md               # Default welcome copy (Chainlit UI)
+    chainlit_en-US.md         # English (US) welcome copy
+    .chainlit/config.toml     # Chainlit UI / feature settings
+    public/                   # Static assets (e.g. theme)
+    curc_chat/                # Application logic (refactored package)
+      __init__.py
+      settings.py             # Paths / env (e.g. OLLAMA_HOST, system prompt path)
+      security.py             # POSIX file permission helper
+      uploads.py              # Attachments: text, PDF, images for the model
+      auth.py                 # Header auth + per-user token file (~/.chainlit_auth_token)
+      chainlit_handlers.py    # @cl.on_message, profiles, data layer wiring, Ollama streaming
+      models/
+        ollama_models.py      # Ollama model list + cache
+      storage/
+        sqlite_layer.py       # SQLite BaseDataLayer implementation
+    auth.py
+    data_layer.py
+    models.py
+    utils.py
+```
+
+## Local or manual run
+
+From the `template/bin` directory:
+
+```bash
+cd template/bin
+python -m pip install -r ../../requirements.txt
 chainlit run app.py
 ```
 
-## Authentication & Security
+## Documentation
 
-This application uses a strict, local authentication mechanism designed for shared systems:
-
-1.  **Token Generation**: On first run, a unique secure token is generated and stored in `~/.chainlit_auth_token`.
-2.  **Permissions**: This token file is created with `0o600` permissions (read/write only by the owner) to prevent other users on the system from accessing it.
-3.  **Automatic Login**: The application reads this token to automatically authenticate the current system user.
-4.  **Session Security**: The user's chat history is encrypted using a secret derived from this secure token.
-
-> [!IMPORTANT]
-> Do not share your `~/.chainlit_auth_token` file. It acts as your password for accessing your chat history.
-
-## Project Structure
-
--   `app.py`: Main application entry point and UI logic.
--   `auth.py`: Secure authentication and token management.
--   `data_layer.py`: Custom SQLite data layer for chat persistence.
--   `models.py`: Ollama model discovery and capability detection.
--   `utils.py`: Shared utilities for file processing and permission handling.
-
-## Usage
-
-1.  Start Ollama: `ollama serve`
-2.  Run the app: `chainlit run app.py`
-3.  Open your browser to http
-4.  Select a model from the settings profile and start chatting!
-
-## License
-
-- MIT, see `LICENSE` file.
+CU Research Computing documentation hub: [Navigating CURC Documentation](https://curc.readthedocs.io/en/latest/getting_started/navigating_docs.html).
