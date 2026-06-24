@@ -11,3 +11,13 @@ def get_system_prompt_path() -> Path:
 
 def get_audio_sample_rate() -> int:
     return int(os.getenv("CHAINLIT_AUDIO_SAMPLE_RATE", "24000"))
+
+
+def get_max_attach_size_bytes() -> int:
+    """Max attachment size per file (default 500 MB)."""
+    mb = int(os.getenv("CURC_CHAT_MAX_ATTACH_MB", "500"))
+    return mb * 1024 * 1024
+
+
+def get_max_attach_files() -> int:
+    return int(os.getenv("CURC_CHAT_MAX_ATTACH_FILES", "20"))

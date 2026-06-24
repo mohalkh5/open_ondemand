@@ -66,6 +66,50 @@ CODE_EXTENSIONS = {
 }
 
 
+IMAGE_EXTENSIONS = {
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".bmp",
+    ".tif",
+    ".tiff",
+}
+
+
+def process_paths(paths: List[Path]) -> Tuple[str, List[str]]:
+    """Read files at server paths and return (text_context, base64_images)."""
+    additional_context = ""
+    images: List[str] = []
+
+    for path in paths:
+        ext = path.suffix.lower()
+        name = path.name
+
+        if ext in IMAGE_EXTENSIONS:
+            images.extend(_read_image_file(path))
+            additional_context += f"\n[Image attached: {path}]"
+
+        elif (
+            ext in CODE_EXTENSIONS
+            or ext in {".txt", ".md", ".markdown", ".rst", ""}
+            or name.lower() in {"dockerfile", "makefile", "gemfile", "rakefile"}
+        ):
+            additional_context += _read_text_path(path)
+
+        elif ext == ".pdf":
+            additional_context += _read_pdf_path(path)
+
+        else:
+            additional_context += (
+                f"\n[Skipped unsupported file type `{ext}` for {path}. "
+                "Supported: images, PDF, and text/code files.]\n"
+            )
+
+    return additional_context, images
+
+
 def process_uploaded_files(elements: List[Any]) -> Tuple[str, List[str]]:
     """
     Process uploaded files and return text content and image data.
@@ -100,6 +144,36 @@ def process_uploaded_files(elements: List[Any]) -> Tuple[str, List[str]]:
             additional_context += _process_pdf(element)
 
     return additional_context, images
+
+
+def _read_image_file(path: Path) -> List[str]:
+    images: List[str] = []
+    try:
+        with open(path, "rb") as f:
+            images.append(base64.b64encode(f.read()).decode("utf-8"))
+    except Exception as e:
+        logger.warning(f"Error reading image {path}: {e}")
+    return images
+
+
+def _read_text_path(path: Path) -> str:
+    try:
+        text_content = path.read_text()
+        return f"\n\n--- File: {path} ---\n{text_content}\n--- End of file ---\n"
+    except Exception as e:
+        return f"\n[Error reading file {path}: {e}]"
+
+
+def _read_pdf_path(path: Path) -> str:
+    try:
+        with open(path, "rb") as f:
+            pdf_reader = PyPDF2.PdfReader(f)
+            text = "\n".join(page.extract_text() or "" for page in pdf_reader.pages)
+            return f"\n\n--- PDF: {path} ---\n{text}\n--- End of PDF ---\n"
+    except ImportError:
+        return "\n[PDF support not available. Install PyPDF2 to read PDF files.]"
+    except Exception as e:
+        return f"\n[Error reading PDF {path}: {e}]"
 
 
 def _process_image(element: Any) -> List[str]:
