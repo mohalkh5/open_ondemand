@@ -194,12 +194,54 @@ async def _attach_spoken_reply(response_message: cl.Message, text: str) -> None:
         logger.warning("Spoken reply failed (text reply still shown)", exc_info=True)
 
 
+def _build_ollama_messages(
+    system_prompt: str,
+    message_history: List[dict],
+    *,
+    skip_user_append: bool = False,
+    override_user_content: Optional[str] = None,
+    override_images: Optional[List[str]] = None,
+) -> List[dict]:
+    """Build Ollama messages; file bodies stay in _api_content for the latest user turn only."""
+    messages: List[dict] = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+
+    for i, msg in enumerate(message_history):
+        is_last = i == len(message_history) - 1
+        if is_last and msg.get("role") == "user":
+            content = msg.get("_api_content", msg.get("content", ""))
+            if skip_user_append and override_user_content is not None:
+                content = override_user_content
+            entry: dict = {"role": "user", "content": content}
+            imgs = override_images if skip_user_append else msg.get("images")
+            if imgs:
+                entry["images"] = imgs
+            messages.append(entry)
+        else:
+            messages.append({"role": msg["role"], "content": msg.get("content", "")})
+
+    return messages
+
+
+def _history_label_for_attachments(
+    clean_message: str, attached_paths: List[str]
+) -> str:
+    """Short text stored in session history (avoids re-sending large files every turn)."""
+    path_note = ", ".join(f"`{p}`" for p in attached_paths)
+    attach_line = f"[Attached: {path_note}]"
+    if clean_message.strip():
+        return f"{clean_message.strip()}\n{attach_line}"
+    return attach_line
+
+
 async def handle_user_turn(
     user_content: str,
     images: Optional[List[str]] = None,
     *,
     skip_user_append: bool = False,
     speak_response: bool = False,
+    history_content: Optional[str] = None,
 ) -> None:
     """Run one chat turn against Ollama (shared by text and voice input)."""
     model = cl.user_session.get("model", "llama3.2")
@@ -207,18 +249,30 @@ async def handle_user_turn(
     message_history = cl.user_session.get("message_history", [])
     system_prompt = cl.user_session.get("system_prompt", "")
 
-    user_message = {"role": "user", "content": user_content}
-    if images:
-        user_message["images"] = images
+    slim = history_content if history_content is not None else user_content
 
     if not skip_user_append:
-        message_history.append(user_message)
+        entry: dict = {"role": "user", "content": slim, "_api_content": user_content}
+        if images:
+            entry["images"] = images
+        message_history.append(entry)
         cl.user_session.set("message_history", message_history)
 
-    messages = []
-    if system_prompt:
-        messages.append({"role": "system", "content": system_prompt})
-    messages.extend(message_history)
+    messages = _build_ollama_messages(
+        system_prompt,
+        message_history,
+        skip_user_append=skip_user_append,
+        override_user_content=user_content if skip_user_append else None,
+        override_images=images if skip_user_append else None,
+    )
+
+    approx_chars = sum(len(m.get("content", "")) for m in messages)
+    logger.info(
+        "Ollama chat turn: model=%s messages=%d approx_chars=%d",
+        model,
+        len(messages),
+        approx_chars,
+    )
 
     response_message = cl.Message(content="")
     await response_message.send()
@@ -273,6 +327,14 @@ async def handle_user_turn(
                 await animation_task
             except asyncio.CancelledError:
                 pass
+            response_message.content = (
+                "⚠️ **The model returned an empty response.**\n\n"
+                "This often happens when the conversation already includes very large "
+                "attached files from earlier messages. Use **New chat**, attach one file "
+                "at a time, or ask a shorter follow-up without re-attaching the same files."
+            )
+            await response_message.update()
+            full_response = response_message.content
 
         message_history.append({"role": "assistant", "content": full_response})
         cl.user_session.set("message_history", message_history)
@@ -303,8 +365,8 @@ async def on_message(message: cl.Message):
             )
         ).send()
 
-    user_content, additional_context, images, path_errors = process_hpc_attachments(
-        message.content
+    clean_text, additional_context, images, path_errors, attached_paths = (
+        process_hpc_attachments(message.content)
     )
 
     if path_errors:
@@ -312,7 +374,7 @@ async def on_message(message: cl.Message):
         await cl.Message(
             content=f"⚠️ **Could not attach file(s):**\n{error_text}"
         ).send()
-        if not user_content and not additional_context:
+        if not clean_text and not additional_context:
             return
 
     if additional_context or images:
@@ -325,7 +387,7 @@ async def on_message(message: cl.Message):
             content=f"📎 **Attached from Alpine:** {', '.join(attached)}"
         ).send()
 
-    await _ensure_thread_created(user_content or message.content, model)
+    await _ensure_thread_created(clean_text or message.content, model)
 
     if images and "vision" not in model_info.get("capabilities"):
         await cl.Message(
@@ -336,20 +398,33 @@ async def on_message(message: cl.Message):
         ).send()
         return
 
+    api_user_content = clean_text.strip()
     if additional_context:
-        user_content += additional_context
+        if not api_user_content:
+            api_user_content = "Please analyze the attached file(s)."
+        api_user_content += additional_context
+
+    history_content = (
+        _history_label_for_attachments(clean_text, attached_paths)
+        if attached_paths
+        else None
+    )
 
     vision_images = None
     if images and "vision" in model_info.get("capabilities", []):
         vision_images = images
 
-    if not user_content.strip() and not vision_images:
+    if not api_user_content.strip() and not vision_images:
         await cl.Message(
             content="Please enter a message or valid Alpine file path(s)."
         ).send()
         return
 
-    await handle_user_turn(user_content, images=vision_images)
+    await handle_user_turn(
+        api_user_content,
+        images=vision_images,
+        history_content=history_content,
+    )
 
 
 __all__ = [

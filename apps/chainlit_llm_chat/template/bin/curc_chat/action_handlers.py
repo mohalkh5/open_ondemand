@@ -36,7 +36,7 @@ async def _regenerate_last_reply() -> None:
 
     last_user = message_history[-1]
     await handle_user_turn(
-        last_user["content"],
+        last_user.get("_api_content", last_user["content"]),
         images=last_user.get("images"),
         skip_user_append=True,
     )

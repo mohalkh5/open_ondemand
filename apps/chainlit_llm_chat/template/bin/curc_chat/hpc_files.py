@@ -69,6 +69,7 @@ def validate_hpc_path(raw_path: str, username: Optional[str] = None) -> Path:
     allowed_roots = get_allowed_roots(username)
 
     expanded = os.path.expanduser(raw_path.strip())
+    expanded = expanded.replace("${USER}", username).replace("$USER", username)
     if not expanded:
         raise ValueError("Empty file path.")
 
@@ -172,16 +173,18 @@ def resolve_hpc_paths(raw_paths: List[str]) -> Tuple[List[Path], List[str]]:
     return ok, errors
 
 
-def process_hpc_attachments(content: str) -> Tuple[str, str, List[str], List[str]]:
+def process_hpc_attachments(
+    content: str,
+) -> Tuple[str, str, List[str], List[str], List[str]]:
     """
     Parse message content for HPC paths and load file data.
 
     Returns:
-        (clean_user_text, additional_context, base64_images, errors)
+        (clean_user_text, additional_context, base64_images, errors, resolved_paths)
     """
     clean_message, raw_paths = extract_paths_from_message(content)
     if not raw_paths:
-        return clean_message, "", [], []
+        return clean_message, "", [], [], []
 
     paths, errors = resolve_hpc_paths(raw_paths)
     logger.info(
@@ -191,7 +194,7 @@ def process_hpc_attachments(content: str) -> Tuple[str, str, List[str], List[str
         errors,
     )
     if not paths:
-        return clean_message, "", [], errors
+        return clean_message, "", [], errors, []
 
     additional_context, images = process_paths(paths)
-    return clean_message, additional_context, images, errors
+    return clean_message, additional_context, images, errors, [str(p) for p in paths]
