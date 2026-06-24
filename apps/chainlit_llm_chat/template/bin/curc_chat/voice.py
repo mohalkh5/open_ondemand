@@ -1,14 +1,20 @@
+"""Speech-to-text: local Whisper on GPU (free, no API key)."""
+
+import asyncio
 import io
 import logging
 import os
+import tempfile
 import wave
-from typing import Optional, Tuple
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
+_whisper_model = None
+
 
 def pcm_chunks_to_wav(pcm_bytes: bytes, sample_rate: int = 24000) -> bytes:
-    """Wrap raw PCM16 mono audio in a WAV container for STT APIs."""
+    """Wrap raw PCM16 mono audio in a WAV container for STT."""
     buffer = io.BytesIO()
     with wave.open(buffer, "wb") as wav_file:
         wav_file.setnchannels(1)
@@ -18,43 +24,51 @@ def pcm_chunks_to_wav(pcm_bytes: bytes, sample_rate: int = 24000) -> bytes:
     return buffer.getvalue()
 
 
-def get_whisper_client():
-    """Build an OpenAI-compatible client for Whisper transcription."""
-    from openai import AsyncOpenAI
+def _get_whisper_model():
+    """Load faster-whisper once per process (downloads model to HF_HOME on first run)."""
+    global _whisper_model
+    if _whisper_model is not None:
+        return _whisper_model
 
-    api_key = os.getenv("OPENAI_API_KEY") or os.getenv("WHISPER_API_KEY")
-    base_url = os.getenv("WHISPER_BASE_URL")
+    from faster_whisper import WhisperModel
 
-    if not api_key and not base_url:
-        return None
+    size = os.getenv("CURC_WHISPER_MODEL_SIZE", "base")
+    device = os.getenv("CURC_WHISPER_DEVICE", "cuda")
+    compute_type = os.getenv("CURC_WHISPER_COMPUTE_TYPE", "float16")
 
-    return AsyncOpenAI(
-        api_key=api_key or "not-needed",
-        base_url=base_url,
-    )
+    if device == "cuda":
+        try:
+            _whisper_model = WhisperModel(size, device="cuda", compute_type=compute_type)
+            logger.info("Loaded faster-whisper model=%s device=cuda", size)
+            return _whisper_model
+        except Exception:
+            logger.warning("CUDA unavailable for Whisper; falling back to CPU", exc_info=True)
+
+    _whisper_model = WhisperModel(size, device="cpu", compute_type="int8")
+    logger.info("Loaded faster-whisper model=%s device=cpu", size)
+    return _whisper_model
+
+
+def _transcribe_wav_sync(wav_bytes: bytes) -> str:
+    model = _get_whisper_model()
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=True) as tmp:
+        tmp.write(wav_bytes)
+        tmp.flush()
+        segments, _ = model.transcribe(tmp.name)
+        return "".join(segment.text for segment in segments).strip()
 
 
 async def transcribe_audio_wav(wav_bytes: bytes) -> str:
     """
-    Transcribe WAV audio using an OpenAI-compatible Whisper endpoint.
+  Transcribe WAV audio with local faster-whisper (free, runs on the job GPU).
 
-    Configure on CURC with either:
-      - OPENAI_API_KEY (api.openai.com), or
-      - WHISPER_BASE_URL + WHISPER_API_KEY for a hosted Whisper endpoint.
-    """
-    client = get_whisper_client()
-    if client is None:
-        raise RuntimeError(
-            "Speech-to-text is not configured. Set OPENAI_API_KEY or "
-            "WHISPER_BASE_URL (and optionally WHISPER_API_KEY) on the compute node."
-        )
+  First run downloads the model into HF_HOME (default: /projects/$USER/.cache/huggingface).
+  """
+    return await asyncio.to_thread(_transcribe_wav_sync, wav_bytes)
 
-    model = os.getenv("WHISPER_MODEL", "whisper-1")
-    whisper_input: Tuple[str, bytes, str] = ("audio.wav", wav_bytes, "audio/wav")
 
-    response = await client.audio.transcriptions.create(
-        model=model,
-        file=whisper_input,
-    )
-    text = getattr(response, "text", None) or str(response)
-    return text.strip()
+def whisper_model_status() -> Optional[str]:
+    """Return a short status string if the model is already loaded."""
+    if _whisper_model is None:
+        return None
+    return os.getenv("CURC_WHISPER_MODEL_SIZE", "base")

@@ -1,8 +1,10 @@
 """
-Chainlit voice assistant hooks (microphone → STT → existing Ollama chat).
+Chainlit voice assistant (microphone → local Whisper STT → Ollama → free TTS reply).
 
-The microphone button appears in the UI only when @cl.on_audio_chunk is registered.
-Users hold **P** to talk, then release to send (see Chainlit multi-modality docs).
+Inspired by the Chainlit openai-whisper cookbook, but uses local faster-whisper and
+edge-tts so no paid API keys are required.
+
+Hold **P** while speaking, then release to send.
 """
 
 import logging
@@ -63,7 +65,10 @@ async def on_audio_end():
         await cl.Message(
             content=(
                 f"Could not transcribe audio: {e}\n\n"
-                "Configure `OPENAI_API_KEY` or `WHISPER_BASE_URL` for speech-to-text."
+                "Local Whisper runs on the job GPU (no API key). "
+                "On first use it downloads a model to `HF_HOME` "
+                "(default `/projects/$USER/.cache/huggingface`). "
+                "Relaunch after the download completes."
             )
         ).send()
         return
@@ -82,4 +87,4 @@ async def on_audio_end():
         elements=[input_audio],
     ).send()
 
-    await handle_user_turn(transcript)
+    await handle_user_turn(transcript, speak_response=True)

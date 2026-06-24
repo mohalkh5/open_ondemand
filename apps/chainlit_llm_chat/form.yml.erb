@@ -1,18 +1,17 @@
 form:
   - model_path
-  # Preset-only mode: `config_type` and all custom Slurm fields are disabled.
-  # - config_type
+  - config_type
   - preset_configuration
-  # - cluster
-  # - account
-  # - partition_name
-  # - qos_name
-  # - num_hours
-  # - num_cores
-  # - reservation
-  # - gres
-  # - nodelist
-  # - constraint
+  - cluster
+  - account
+  - partition_name
+  - qos_name
+  - num_hours
+  - num_cores
+  - reservation
+  - gres
+  - nodelist
+  - constraint
 
 attributes:
   preset_configuration:
@@ -24,54 +23,54 @@ attributes:
      widget: text_field
      label: Ollama model path
      value: "CURC LLM Models"
-  # cluster:
-  #    widget: select
-  #    options:
-  #      - ["Alpine", "alpine"]
-  #      - ["Blanca", "blanca"]
-  # num_cores:
-  #    widget: "number_field"
-  #    label: "Number of cores"
-  #    value: 1
-  #    min: 1
-  #    max: 64
-  #    step: 1
-  # account:
-  #    widget: text_field
-  #    value: "ucb-general"
-  # partition_name:
-  #    value: ahub
-  #    label: Partition
-  # num_hours:
-  #    widget: "number_field"
-  #    label: "Time"
-  #    value: 4
-  #    min: 1
-  #    max: 24
-  # qos_name:
-  #    widget: text_field
-  #    label: QoS
-  #    value: "interactive"
-  # reservation:
-  #    widget: text_field
-  #    label: Reservation (default is None)
-  #    value: None
-  # gres:
-  #    widget: text_field
-  #    label: gres options (default is None)
-  #    value: None
-  # nodelist:
-  #    widget: text_field
-  #    label: nodelist (default is None)
-  #    value: None
-  # constraint:
-  #    widget: text_field
-  #    label: constraint (default is None)
-  #    value: None
-  # config_type:
-  #    widget: select
-  #    label: Configuration type
-  #    options:
-  #      - ['Preset configuration', 'presets', data-hide-cluster: true, data-hide-num-cores: true, data-hide-account: true, data-hide-partition-name: true, data-hide-num-hours: true, data-hide-qos-name: true,  data-hide-reservation: true,  data-hide-gres: true, data-hide-nodelist: true, data-hide-constraint: true,]
-  #      - ['Custom configuration', 'custom', data-hide-preset-configuration: true]
-  #    cacheable: false
+  cluster:
+     widget: select
+     options:
+       - ["Alpine", "alpine"]
+       - ["Blanca", "blanca"]
+  num_cores:
+     widget: "number_field"
+     label: "Number of cores"
+     value: 1
+     min: 1
+     max: 64
+     step: 1
+  account:
+     widget: text_field
+     value: "ucb-general"
+  partition_name:
+     value: ahub
+     label: Partition
+  num_hours:
+     widget: "number_field"
+     label: "Time"
+     value: 4
+     min: 1
+     max: 24
+  qos_name:
+     widget: text_field
+     label: QoS
+     value: "interactive"
+  reservation:
+     widget: text_field
+     label: Reservation (default is None)
+     value: None
+  gres:
+     widget: text_field
+     label: gres options (default is None)
+     value: None
+  nodelist:
+     widget: text_field
+     label: nodelist (default is None)
+     value: None
+  constraint:
+     widget: text_field
+     label: constraint (default is None)
+     value: None
+  config_type:
+     widget: select
+     label: Configuration type
+     options:
+       - ['Preset configuration', 'presets', data-hide-cluster: true, data-hide-num-cores: true, data-hide-account: true, data-hide-partition-name: true, data-hide-num-hours: true, data-hide-qos-name: true,  data-hide-reservation: true,  data-hide-gres: true, data-hide-nodelist: true, data-hide-constraint: true,]
+       - ['Custom configuration', 'custom', data-hide-preset-configuration: true]
+     cacheable: false

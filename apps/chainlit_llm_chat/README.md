@@ -11,7 +11,30 @@ cd bin
 chainlit run --root-path /node/${host}/${port} --port $port --debug --host $(hostname -I) app.py
 ```
 
-That path is defined in `template/script.sh.erb`. 
+That path is defined in `template/script.sh.erb`.
+
+## Voice input and spoken replies (free, no API keys)
+
+Voice works like the [Chainlit Whisper cookbook](https://github.com/Chainlit/cookbook/blob/main/openai-whisper/app.py), but **without paid APIs**:
+
+| Step | Technology | Cost |
+|------|------------|------|
+| Speech → text | [faster-whisper](https://github.com/SYSTRAN/faster-whisper) on the job GPU | Free |
+| Text → speech | [edge-tts](https://github.com/rany2/edge-tts) (Microsoft Edge voices) | Free |
+
+Hold **P** while speaking, release to send. The assistant reply is read aloud automatically.
+
+**First session only:** faster-whisper downloads a model into `HF_HOME` (default `/projects/$USER/.cache/huggingface`). The job has a GPU (`gres=gpu:1`), so transcription runs locally.
+
+**TTS note:** edge-tts needs outbound HTTPS from the compute node (no API key). If your node has no internet, you still get the text reply; set `CURC_VOICE_TTS=none` to skip spoken output.
+
+Optional tuning via `~/.curc_chat_env` (copy from `template/curc_chat_env.example`):
+
+```bash
+export CURC_WHISPER_MODEL_SIZE="base"    # tiny | base | small
+export CURC_TTS_VOICE="en-US-AriaNeural"
+export CURC_VOICE_TTS="edge"             # or "none"
+```
 
 ## Project layout
 
@@ -19,6 +42,7 @@ That path is defined in `template/script.sh.erb`.
 requirements.txt              # Python dependencies (install in your venv on CURC)
 template/
   script.sh.erb               # OOD job: modules, env, then `cd bin` + `chainlit run app.py`
+  curc_chat_env.example       # Optional voice tuning (model size, TTS voice)
   before.sh.erb               # OOD hook (port discovery, etc.)
   after.sh.erb                # OOD hook (wait for port)
   bin/

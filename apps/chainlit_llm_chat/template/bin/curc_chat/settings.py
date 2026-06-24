@@ -21,3 +21,11 @@ def get_max_attach_size_bytes() -> int:
 
 def get_max_attach_files() -> int:
     return int(os.getenv("CURC_CHAT_MAX_ATTACH_FILES", "20"))
+
+
+def get_whisper_model_size() -> str:
+    return os.getenv("CURC_WHISPER_MODEL_SIZE", "base")
+
+
+def is_voice_tts_enabled() -> bool:
+    return os.getenv("CURC_VOICE_TTS", "edge").lower() not in ("none", "off", "false", "0")

@@ -88,7 +88,7 @@ async def send_welcome_message() -> None:
             "[Open OnDemand](https://curc.readthedocs.io/en/latest/open_ondemand/index.html) "
             "to copy paths ([filesystem guide](https://curc.readthedocs.io/en/latest/compute/filesystems.html))\n\n"
             "- Choose a model from the profile menu (vision models for images)\n"
-            "- Hold **P** for voice input\n"
+            "- Hold **P** for voice (local Whisper STT + spoken reply; no API key)\n"
             "- Action buttons under replies: regenerate, copy code, new chat"
         ),
         actions=[
@@ -178,11 +178,28 @@ async def _ensure_thread_created(title: str, model: str) -> None:
         logger.warning(f"Error creating thread: {e}")
 
 
+async def _attach_spoken_reply(response_message: cl.Message, text: str) -> None:
+    """Add auto-play TTS audio to an assistant message (free edge-tts backend)."""
+    try:
+        from curc_chat.tts import synthesize_speech
+
+        audio_bytes, mime = await synthesize_speech(text)
+        if not audio_bytes:
+            return
+        response_message.elements = [
+            cl.Audio(auto_play=True, mime=mime, content=audio_bytes)
+        ]
+        await response_message.update()
+    except Exception:
+        logger.warning("Spoken reply failed (text reply still shown)", exc_info=True)
+
+
 async def handle_user_turn(
     user_content: str,
     images: Optional[List[str]] = None,
     *,
     skip_user_append: bool = False,
+    speak_response: bool = False,
 ) -> None:
     """Run one chat turn against Ollama (shared by text and voice input)."""
     model = cl.user_session.get("model", "llama3.2")
@@ -247,6 +264,9 @@ async def handle_user_turn(
             if response_message.id:
                 remember_message_content(response_message.id, full_response)
             await response_message.update()
+
+            if speak_response and full_response.strip():
+                await _attach_spoken_reply(response_message, full_response)
         else:
             animation_task.cancel()
             try:
