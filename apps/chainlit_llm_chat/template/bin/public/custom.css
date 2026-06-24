@@ -1,0 +1,12 @@
+/* CURC: hide browser file attach — use /file <alpine-path> instead */
+button[aria-label="Attach files"],
+button[aria-label*="Attach file"],
+label[for="upload-drop-input"] {
+  display: none !important;
+}
+
+input#upload-drop-input,
+input[type="file"] {
+  display: none !important;
+  pointer-events: none !important;
+}

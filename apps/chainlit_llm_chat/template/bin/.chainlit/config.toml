@@ -103,7 +103,7 @@ confirm_new_chat = false
 cot = "hidden"
 
 # Specify additional attributes for a custom CSS file
-# custom_css_attributes = "media=\"print\""
+custom_css = "/public/custom.css"
 
 # The style of alert boxes. Can be "classic" or "modern".
 alert_style = "modern"

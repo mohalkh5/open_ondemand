@@ -19,4 +19,7 @@ export CHAINLIT_DATA_DIR="/projects/${USER}/.chainlit_data"
 sleep 5 
 
 cd bin 
+echo "CURC chat app dir: $(pwd)"
+grep -E "spontaneous_file_upload|enabled" .chainlit/config.toml | head -5 || true
+test -f curc_chat/hpc_files.py && echo "HPC path attachments: curc_chat/hpc_files.py present" || echo "WARNING: hpc_files.py missing"
 chainlit run --root-path /node/${host}/${port} --port $port --debug --host $(hostname -I) app.py

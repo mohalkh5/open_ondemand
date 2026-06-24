@@ -1,6 +1,10 @@
 import logging
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+logger.info(
+    "CURC LLM chat starting: HPC /file path attachments ON, browser upload OFF"
+)
 
 from curc_chat.chainlit_handlers import (
     chat_profiles,

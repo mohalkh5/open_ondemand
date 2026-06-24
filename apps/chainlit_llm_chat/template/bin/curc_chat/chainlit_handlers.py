@@ -77,18 +77,18 @@ async def send_welcome_message() -> None:
     await cl.Message(
         content=(
             f"**CURC LLM Chat** — model: `{model}`\n\n"
-            "- Choose a model from the profile menu\n"
-            "- **Attach files from Alpine** by pasting paths in your message "
-            "(browser upload is disabled). Examples:\n"
-            "  - `/file /projects/$USER/report.pdf`\n"
-            "  - `/file /scratch/alpine/$USER/data.csv /home/$USER/script.py`\n"
-            "  - Or one absolute path per line\n"
+            "**Attach Alpine files (not browser upload):**\n"
+            "- `/file /projects/$USER/myfile.pdf` — one or more **file** paths\n"
+            "- Or put one absolute file path per line\n"
+            "- Paths must be **files**, not directories "
+            "(e.g. `/projects/mokh8410/report.pdf`, not `/projects/mokh8410`)\n"
             "- Allowed roots: `/home/$USER`, `/projects/$USER`, "
-            "`/scratch/alpine/$USER`, `/pl/active/<your_allocation>/...`\n"
-            "- Use the **Files** app in [Open OnDemand](https://curc.readthedocs.io/en/latest/open_ondemand/index.html) "
-            "to browse paths; see [CURC filesystems](https://curc.readthedocs.io/en/latest/compute/filesystems.html)\n"
-            "- Use a vision-capable model for image paths\n"
-            "- Hold **P** to record voice input\n"
+            "`/scratch/alpine/$USER`, `/pl/active/<allocation>/...`\n"
+            "- Use the **Files** app in "
+            "[Open OnDemand](https://curc.readthedocs.io/en/latest/open_ondemand/index.html) "
+            "to copy paths ([filesystem guide](https://curc.readthedocs.io/en/latest/compute/filesystems.html))\n\n"
+            "- Choose a model from the profile menu (vision models for images)\n"
+            "- Hold **P** for voice input\n"
             "- Action buttons under replies: regenerate, copy code, new chat"
         ),
         actions=[
@@ -276,12 +276,12 @@ async def on_message(message: cl.Message):
     if message.elements:
         await cl.Message(
             content=(
-                "Browser file upload is disabled. Attach Alpine files by path instead, e.g.\n\n"
+                "⚠️ **Browser upload is disabled** and was ignored.\n\n"
+                "Attach files with an Alpine **file** path, for example:\n\n"
                 "`/file /projects/$USER/myfile.pdf`\n\n"
-                "Use the **Files** app in Open OnDemand to find paths."
+                "Use the **Files** app in Open OnDemand to find the full path."
             )
         ).send()
-        return
 
     user_content, additional_context, images, path_errors = process_hpc_attachments(
         message.content
@@ -290,10 +290,20 @@ async def on_message(message: cl.Message):
     if path_errors:
         error_text = "\n".join(f"- {err}" for err in path_errors)
         await cl.Message(
-            content=f"⚠️ **Could not attach some files:**\n{error_text}"
+            content=f"⚠️ **Could not attach file(s):**\n{error_text}"
         ).send()
         if not user_content and not additional_context:
             return
+
+    if additional_context or images:
+        attached = []
+        if images:
+            attached.append(f"{len(images)} image(s)")
+        if additional_context:
+            attached.append("text/PDF content")
+        await cl.Message(
+            content=f"📎 **Attached from Alpine:** {', '.join(attached)}"
+        ).send()
 
     await _ensure_thread_created(user_content or message.content, model)
 

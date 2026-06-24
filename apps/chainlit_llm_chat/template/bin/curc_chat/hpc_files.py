@@ -86,8 +86,17 @@ def validate_hpc_path(raw_path: str, username: Optional[str] = None) -> Path:
             f"Path is outside allowed CURC filesystem roots ({allowed_display}): {raw_path}"
         )
 
+    if not resolved.exists():
+        raise ValueError(f"File not found: {raw_path}")
+
+    if resolved.is_dir():
+        raise ValueError(
+            f"Path is a directory, not a file: {raw_path}\n"
+            f"Specify a file inside it, e.g. `{raw_path}/myfile.pdf`"
+        )
+
     if not resolved.is_file():
-        raise ValueError(f"Not a file or not readable: {raw_path}")
+        raise ValueError(f"Not a readable file: {raw_path}")
 
     size = resolved.stat().st_size
     max_bytes = get_max_attach_size_bytes()
@@ -175,6 +184,12 @@ def process_hpc_attachments(content: str) -> Tuple[str, str, List[str], List[str
         return clean_message, "", [], []
 
     paths, errors = resolve_hpc_paths(raw_paths)
+    logger.info(
+        "HPC attachments: requested=%s valid=%s errors=%s",
+        raw_paths,
+        [str(p) for p in paths],
+        errors,
+    )
     if not paths:
         return clean_message, "", [], errors
 

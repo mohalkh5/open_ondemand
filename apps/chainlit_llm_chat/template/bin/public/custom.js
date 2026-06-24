@@ -77,4 +77,30 @@
     var payload = parsePayload(event.detail);
     handleCurcMessage(payload);
   });
+
+  /** Hide attach-file controls (backup if config.toml upload flag is stale on server). */
+  function hideAttachControls() {
+    var selectors = [
+      'button[aria-label="Attach files"]',
+      'button[aria-label*="Attach file"]',
+      "#upload-drop-input",
+      'input[type="file"]',
+    ];
+    selectors.forEach(function (sel) {
+      document.querySelectorAll(sel).forEach(function (el) {
+        el.style.display = "none";
+        el.setAttribute("disabled", "true");
+        if (el.type === "file") {
+          el.disabled = true;
+        }
+      });
+    });
+  }
+
+  hideAttachControls();
+  var attachObserver = new MutationObserver(hideAttachControls);
+  attachObserver.observe(document.documentElement, {
+    childList: true,
+    subtree: true,
+  });
 })();
