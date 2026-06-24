@@ -4,11 +4,7 @@ import json
 
 import chainlit as cl
 
-from curc_chat.chainlit_handlers import (
-    handle_user_turn,
-    init_chat_session,
-    send_welcome_message,
-)
+from curc_chat.chainlit_handlers import handle_user_turn
 from curc_chat.message_actions import (
     ACTION_COPY_CODE,
     ACTION_NEW_CHAT,
@@ -105,7 +101,6 @@ async def on_switch_vision_model(action: cl.Action):
 
 @cl.action_callback(ACTION_NEW_CHAT)
 async def on_new_chat(action: cl.Action):
-    init_chat_session()
-    await cl.send_window_message(json.dumps({"type": "curc_new_chat"}))
-    await send_welcome_message()
+    """Open a real new Chainlit thread in the browser (do not reset in-place)."""
     await action.remove()
+    await cl.send_window_message(json.dumps({"type": "curc_new_chat"}))

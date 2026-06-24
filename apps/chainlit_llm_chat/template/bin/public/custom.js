@@ -32,12 +32,36 @@
     document.body.removeChild(el);
   }
 
+  function clearChainlitThreadStorage() {
+    try {
+      Object.keys(localStorage).forEach(function (key) {
+        var lower = key.toLowerCase();
+        if (
+          lower.indexOf("chainlit") !== -1 &&
+          (lower.indexOf("thread") !== -1 || lower.indexOf("session") !== -1)
+        ) {
+          localStorage.removeItem(key);
+        }
+      });
+      Object.keys(sessionStorage).forEach(function (key) {
+        var lower = key.toLowerCase();
+        if (lower.indexOf("chainlit") !== -1 && lower.indexOf("thread") !== -1) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    } catch (_e) {
+      /* ignore */
+    }
+  }
+
   function clickNewChat() {
     var selectors = [
       'button[aria-label="New Chat"]',
       'button[aria-label="New chat"]',
       'a[aria-label="New Chat"]',
       'a[aria-label="New chat"]',
+      '[data-testid="new-chat-button"]',
+      '[data-testid="new-chat"]',
     ];
     for (var i = 0; i < selectors.length; i++) {
       var el = document.querySelector(selectors[i]);
@@ -57,13 +81,26 @@
     return false;
   }
 
+  function startNewChat() {
+    clearChainlitThreadStorage();
+    if (clickNewChat()) {
+      return;
+    }
+    // Fallback: reload app root so Chainlit starts a fresh thread/socket session.
+    var path = window.location.pathname || "/";
+    if (!path.endsWith("/")) {
+      path += "/";
+    }
+    window.location.assign(path);
+  }
+
   function handleCurcMessage(payload) {
     if (!payload || !payload.type) return;
     if (payload.type === "curc_copy_code" && payload.code) {
       copyToClipboard(payload.code);
     }
     if (payload.type === "curc_new_chat") {
-      clickNewChat();
+      startNewChat();
     }
   }
 

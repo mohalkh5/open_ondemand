@@ -5,7 +5,11 @@ from typing import Any, List, Tuple
 
 import PyPDF2
 
+from curc_chat.settings import get_max_pdf_extract_chars
+
 logger = logging.getLogger(__name__)
+
+PDF_EMPTY_MARKER = "CURC_PDF_NO_EXTRACTABLE_TEXT"
 
 CODE_EXTENSIONS = {
     ".py",
@@ -168,11 +172,40 @@ def _read_pdf_path(path: Path) -> str:
     try:
         with open(path, "rb") as f:
             pdf_reader = PyPDF2.PdfReader(f)
-            text = "\n".join(page.extract_text() or "" for page in pdf_reader.pages)
-            return f"\n\n--- PDF: {path} ---\n{text}\n--- End of PDF ---\n"
+            if getattr(pdf_reader, "is_encrypted", False):
+                try:
+                    pdf_reader.decrypt("")
+                except Exception:
+                    return (
+                        f"\n[{PDF_EMPTY_MARKER}: `{path}` is encrypted/password-protected. "
+                        "Use an unencrypted copy or export as plain text.]\n"
+                    )
+
+            page_count = len(pdf_reader.pages)
+            text = "\n".join(page.extract_text() or "" for page in pdf_reader.pages).strip()
+            logger.info("PDF extract %s: pages=%d chars=%d", path, page_count, len(text))
+
+            if not text:
+                return (
+                    f"\n[{PDF_EMPTY_MARKER}: `{path}` has no extractable text "
+                    f"({page_count} page(s)). It may be scanned/image-only — "
+                    "try OCR or a text export.]\n"
+                )
+
+            max_chars = get_max_pdf_extract_chars()
+            truncated = ""
+            if len(text) > max_chars:
+                truncated = f"\n\n[... PDF text truncated to {max_chars} characters ...]"
+                text = text[:max_chars]
+
+            return (
+                f"\n\n--- PDF: {path} ({page_count} pages, {len(text)} chars) ---\n"
+                f"{text}{truncated}\n--- End of PDF ---\n"
+            )
     except ImportError:
         return "\n[PDF support not available. Install PyPDF2 to read PDF files.]"
     except Exception as e:
+        logger.warning("PDF read failed for %s: %s", path, e)
         return f"\n[Error reading PDF {path}: {e}]"
 
 

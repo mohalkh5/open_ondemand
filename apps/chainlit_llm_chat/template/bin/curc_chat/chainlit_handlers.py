@@ -8,8 +8,14 @@ from ollama import AsyncClient
 
 from curc_chat.auth import get_current_user, get_or_create_auth_token, header_auth_callback
 from curc_chat.models import model_cache
-from curc_chat.settings import get_ollama_host, get_system_prompt_path
+from curc_chat.settings import (
+    get_ollama_host,
+    get_ollama_num_ctx,
+    get_ollama_num_predict,
+    get_system_prompt_path,
+)
 from curc_chat.hpc_files import process_hpc_attachments
+from curc_chat.uploads import PDF_EMPTY_MARKER
 from curc_chat.message_actions import build_assistant_actions, remember_message_content
 from curc_chat.storage.sqlite_layer import get_data_layer
 
@@ -115,13 +121,18 @@ async def on_chat_resume(thread: dict):
 
     for step in thread.get("steps", []):
         step_type = step.get("type")
+        output = step.get("output", "") or ""
+        # Resume with slim history — do not reload huge file bodies from SQLite.
+        if len(output) > 2000 and "--- PDF:" in output:
+            output = output.split("\n", 1)[0] or "[Attached file — content not reloaded on resume]"
         if step_type == "user_message":
-            message_history.append({"role": "user", "content": step.get("output", "")})
+            message_history.append({"role": "user", "content": output})
         elif step_type == "assistant_message":
-            message_history.append({"role": "assistant", "content": step.get("output", "")})
+            message_history.append({"role": "assistant", "content": output})
 
     cl.user_session.set("message_history", message_history)
     cl.user_session.set("system_prompt", load_system_prompt())
+    cl.user_session.set("thread_created", True)
 
     metadata = thread.get("metadata", {})
     model = metadata.get("model", "llama3.2")
@@ -288,26 +299,37 @@ async def handle_user_turn(
 
     try:
         full_response = ""
-        stream = await client.chat(model=model, messages=messages, stream=True)
+        stream = await client.chat(
+            model=model,
+            messages=messages,
+            stream=True,
+            options={
+                "num_ctx": get_ollama_num_ctx(),
+                "num_predict": get_ollama_num_predict(),
+            },
+        )
 
-        first_chunk = True
+        stream_started = False
         async for chunk in stream:
-            if first_chunk:
+            msg = chunk.get("message") or {}
+            content = msg.get("content") or chunk.get("response") or ""
+            if not content:
+                continue
+
+            if not stream_started:
+                stream_started = True
                 animation_task.cancel()
                 try:
                     await animation_task
                 except asyncio.CancelledError:
                     pass
-                first_chunk = False
                 response_message.content = ""
                 await response_message.update()
 
-            if "message" in chunk and "content" in chunk["message"]:
-                content = chunk["message"]["content"]
-                full_response += content
-                await response_message.stream_token(content)
+            full_response += content
+            await response_message.stream_token(content)
 
-        if not first_chunk:
+        if full_response.strip():
             response_message.content = full_response
             response_message.actions = build_assistant_actions(
                 message_id=response_message.id or "",
@@ -321,6 +343,7 @@ async def handle_user_turn(
 
             if speak_response and full_response.strip():
                 await _attach_spoken_reply(response_message, full_response)
+            logger.info("Ollama reply: model=%s chars=%d", model, len(full_response))
         else:
             animation_task.cancel()
             try:
@@ -329,12 +352,20 @@ async def handle_user_turn(
                 pass
             response_message.content = (
                 "⚠️ **The model returned an empty response.**\n\n"
-                "This often happens when the conversation already includes very large "
-                "attached files from earlier messages. Use **New chat**, attach one file "
-                "at a time, or ask a shorter follow-up without re-attaching the same files."
+                "Common causes:\n"
+                "- The PDF has no extractable text (scanned/image PDF)\n"
+                "- The prompt is too large for the model context\n"
+                "- The model timed out\n\n"
+                "Try **New chat**, attach one file, or ask a shorter question."
             )
             await response_message.update()
             full_response = response_message.content
+            logger.warning(
+                "Ollama empty stream: model=%s messages=%d approx_chars=%d",
+                model,
+                len(messages),
+                approx_chars,
+            )
 
         message_history.append({"role": "assistant", "content": full_response})
         cl.user_session.set("message_history", message_history)
@@ -386,6 +417,13 @@ async def on_message(message: cl.Message):
         await cl.Message(
             content=f"📎 **Attached from Alpine:** {', '.join(attached)}"
         ).send()
+
+    if additional_context and PDF_EMPTY_MARKER in additional_context:
+        await cl.Message(
+            content=f"⚠️ **Could not read PDF text.**\n{additional_context.strip()}"
+        ).send()
+        if not clean_text.strip():
+            return
 
     await _ensure_thread_created(clean_text or message.content, model)
 
