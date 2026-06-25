@@ -134,6 +134,22 @@
     });
   }
 
+  /** Hide human feedback buttons (thumbs up/down on assistant messages). */
+  function hideFeedbackControls() {
+    var selectors = [
+      'button[aria-label="Helpful"]',
+      'button[aria-label="Not helpful"]',
+      'button[aria-label="Edit feedback"]',
+    ];
+    selectors.forEach(function (sel) {
+      document.querySelectorAll(sel).forEach(function (el) {
+        el.style.display = "none";
+        el.setAttribute("disabled", "true");
+        el.setAttribute("aria-hidden", "true");
+      });
+    });
+  }
+
   /** Hide voice/mic controls (backup if features.audio is stale on server). */
   function hideVoiceControls() {
     var selectors = [
@@ -166,6 +182,7 @@
   function hideCurcDisabledControls() {
     hideAttachControls();
     hideVoiceControls();
+    hideFeedbackControls();
   }
 
   hideCurcDisabledControls();

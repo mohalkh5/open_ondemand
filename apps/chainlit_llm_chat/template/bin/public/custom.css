@@ -24,3 +24,11 @@ button[aria-label*="Microphone"],
   display: none !important;
   pointer-events: none !important;
 }
+
+/* Human feedback (thumbs) — UI hidden; chat persistence unchanged */
+button[aria-label="Helpful"],
+button[aria-label="Not helpful"],
+button[aria-label="Edit feedback"] {
+  display: none !important;
+  pointer-events: none !important;
+}
