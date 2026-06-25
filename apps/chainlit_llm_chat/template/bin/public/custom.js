@@ -185,10 +185,10 @@
     hideFeedbackControls();
   }
 
-  /** Hint on empty-state welcome screen (disclaimer lives in send_welcome_message). */
+  /** CURC welcome copy on the empty-state screen (logo → notice → input → starters). */
   function injectWelcomeNotice() {
     var screen = document.getElementById("welcome-screen");
-    if (!screen || document.getElementById("curc-welcome-notice")) {
+    if (!screen || screen.querySelector("#curc-welcome-notice")) {
       return;
     }
     var textarea = screen.querySelector("textarea");
@@ -196,11 +196,32 @@
       return;
     }
 
+    var modelLabel = "";
+    document.querySelectorAll("button[aria-label]").forEach(function (btn) {
+      if (modelLabel) {
+        return;
+      }
+      var label = (btn.getAttribute("aria-label") || "").toLowerCase();
+      if (label.indexOf("profile") !== -1 || label.indexOf("model") !== -1) {
+        modelLabel = (btn.textContent || "").trim();
+      }
+    });
+
     var notice = document.createElement("div");
     notice.id = "curc-welcome-notice";
     notice.className = "curc-welcome-notice";
     notice.innerHTML =
-      '<p class="curc-welcome-hint">Select a model in the header, type below, or choose a starter prompt.</p>';
+      '<p class="curc-welcome-title"><strong>CURC LLM Chat Interface</strong>' +
+      (modelLabel
+        ? ' — model: <code class="curc-welcome-model">' +
+          modelLabel +
+          "</code>"
+        : "") +
+      "</p>" +
+      '<blockquote><strong>Note:</strong> This assistant was <strong>not</strong> trained on ' +
+      '<a href="https://curc.readthedocs.io" target="_blank" rel="noopener noreferrer">' +
+      "CU Research Computing (CURC) documentation</a>.</blockquote>" +
+      '<p class="curc-welcome-hint">Choose a model in the header, type a message below, or pick a starter prompt.</p>';
 
     var composerRoot = textarea;
     while (composerRoot && composerRoot.parentElement !== screen) {

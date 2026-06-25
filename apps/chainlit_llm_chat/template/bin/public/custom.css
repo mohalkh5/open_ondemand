@@ -86,6 +86,13 @@ button[aria-label="Edit feedback"] {
   color: hsl(var(--muted-foreground));
 }
 
+.curc-welcome-model {
+  font-size: 0.85em;
+  padding: 0.1em 0.35em;
+  border-radius: calc(var(--radius) - 2px);
+  background: hsl(var(--muted) / 0.5);
+}
+
 #welcome-screen [data-testid="starter"] button,
 #welcome-screen button[class*="starter"] {
   text-align: left;

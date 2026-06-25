@@ -96,7 +96,12 @@ def init_chat_session() -> None:
 
 
 async def send_welcome_message() -> None:
-    """Welcome copy with a New chat action (also available on each assistant reply)."""
+    """
+    Welcome copy as a chat message (New chat action included).
+
+    Not sent on @cl.on_chat_start — any message hides Chainlit's empty-state welcome
+    screen (logo, starters). The same disclaimer is shown via public/custom.js instead.
+    """
     from curc_chat.message_actions import ACTION_NEW_CHAT
 
     model = cl.user_session.get("model", "llama3.2")
@@ -121,7 +126,7 @@ async def send_welcome_message() -> None:
 @cl.on_chat_start
 async def on_chat_start():
     init_chat_session()
-    await send_welcome_message()
+    # Welcome UI (logo, disclaimer, starters) is the empty-state screen in custom.js.
 
 
 @cl.on_chat_resume
