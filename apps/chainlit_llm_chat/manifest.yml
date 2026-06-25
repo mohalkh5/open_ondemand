@@ -1,7 +1,7 @@
 ---
-name: LLM ChatBot Chainlit
+name: LLMChat Interface
 category: Interactive Apps
 subcategory: Servers
 role: batch_connect
 description: |
-  This is an interactive app that provides a LLM chatbot using chailit. This application starts a local Ollama server connected to CURC's hosted models.
+  This is an interactive app that provides a LLM chat interface using chailit. This application starts a local Ollama server connected to CURC's hosted models.

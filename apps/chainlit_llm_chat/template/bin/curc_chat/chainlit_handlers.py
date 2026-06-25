@@ -84,7 +84,7 @@ async def send_welcome_message() -> None:
         content=(
             "> **Note:** This assistant was **not** trained on "
             "[CU Research Computing (CURC) documentation](https://curc.readthedocs.io).\n\n"
-            f"**CURC LLM Chat** — model: `{model}`\n\n"
+            f"**CURC LLM Chat Interface** — model: `{model}`\n\n"
         ),
         actions=[
             cl.Action(
