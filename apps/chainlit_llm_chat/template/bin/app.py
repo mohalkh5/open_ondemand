@@ -6,6 +6,11 @@ logger.info(
     "CURC LLM chat starting: HPC /file path attachments ON, browser upload OFF"
 )
 
+from curc_chat.voice_deps import ensure_voice_packages
+
+if not ensure_voice_packages():
+    logger.warning("Voice input/output disabled until faster-whisper and edge-tts install.")
+
 from curc_chat.chainlit_handlers import (
     chat_profiles,
     get_user_data_layer,
@@ -15,6 +20,7 @@ from curc_chat.chainlit_handlers import (
     on_message,
 )
 from curc_chat import action_handlers  # noqa: F401 — registers @cl.action_callback hooks
+from curc_chat import starters  # noqa: F401 — registers @cl.set_starters
 from curc_chat import voice_handlers  # noqa: F401 — registers @cl.on_audio_* hooks
 
 __all__ = [

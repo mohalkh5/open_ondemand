@@ -32,3 +32,61 @@ button[aria-label="Edit feedback"] {
   display: none !important;
   pointer-events: none !important;
 }
+
+/* Welcome screen — logo, notice, composer, starters */
+#welcome-screen {
+  max-width: 44rem;
+  width: 100%;
+  padding: 0 1rem 1.5rem;
+  gap: 1.25rem !important;
+}
+
+#welcome-screen img,
+#welcome-screen svg[class*="logo"],
+#welcome-screen .w-\[200px\] {
+  max-width: 220px;
+  height: auto;
+}
+
+.curc-welcome-notice {
+  text-align: center;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.9rem;
+  line-height: 1.55;
+  width: 100%;
+  max-width: 36rem;
+  margin: 0 auto;
+}
+
+.curc-welcome-notice blockquote {
+  border-left: 3px solid hsl(var(--primary));
+  margin: 0.75rem 0 0;
+  padding: 0.65rem 1rem;
+  text-align: left;
+  background: hsl(var(--muted) / 0.35);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+}
+
+.curc-welcome-notice blockquote a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+}
+
+.curc-welcome-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  margin: 0;
+}
+
+.curc-welcome-hint {
+  margin: 0.65rem 0 0;
+  font-size: 0.8125rem;
+  color: hsl(var(--muted-foreground));
+}
+
+#welcome-screen [data-testid="starter"] button,
+#welcome-screen button[class*="starter"] {
+  text-align: left;
+}

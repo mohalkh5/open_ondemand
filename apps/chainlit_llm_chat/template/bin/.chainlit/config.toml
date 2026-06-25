@@ -126,8 +126,8 @@ custom_js = "/public/custom.js"
 # Specify a custom meta image url.
 # custom_meta_image_url = "https://chainlit-cloud.s3.eu-west-3.amazonaws.com/logo/chainlit_banner.png"
 
-# Load assistant logo directly from URL.
-logo_file_url = ""
+# Load assistant logo directly from URL (welcome screen; theme logos in public/).
+logo_file_url = "/public/logo_dark.svg"
 
 # Load assistant avatar image directly from URL.
 default_avatar_file_url = ""

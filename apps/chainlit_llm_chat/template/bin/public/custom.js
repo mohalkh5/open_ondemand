@@ -185,8 +185,62 @@
     hideFeedbackControls();
   }
 
-  hideCurcDisabledControls();
-  var uiObserver = new MutationObserver(hideCurcDisabledControls);
+  /** Hint on empty-state welcome screen (disclaimer lives in send_welcome_message). */
+  function injectWelcomeNotice() {
+    var screen = document.getElementById("welcome-screen");
+    if (!screen || document.getElementById("curc-welcome-notice")) {
+      return;
+    }
+    var textarea = screen.querySelector("textarea");
+    if (!textarea) {
+      return;
+    }
+
+    var notice = document.createElement("div");
+    notice.id = "curc-welcome-notice";
+    notice.className = "curc-welcome-notice";
+    notice.innerHTML =
+      '<p class="curc-welcome-hint">Select a model in the header, type below, or choose a starter prompt.</p>';
+
+    var composerRoot = textarea;
+    while (composerRoot && composerRoot.parentElement !== screen) {
+      composerRoot = composerRoot.parentElement;
+    }
+    if (composerRoot) {
+      screen.insertBefore(notice, composerRoot);
+    } else {
+      screen.insertBefore(notice, textarea);
+    }
+  }
+
+  /** Point the welcome logo at CURC branding (works with OOD root-path relative URLs). */
+  function patchWelcomeLogo() {
+    var screen = document.getElementById("welcome-screen");
+    if (!screen) {
+      return;
+    }
+    var img = screen.querySelector("img");
+    if (!img || img.getAttribute("data-curc-logo")) {
+      return;
+    }
+    var isDark =
+      document.documentElement.classList.contains("dark") ||
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var base = window.location.pathname.replace(/\/?$/, "");
+    img.src = base + (isDark ? "/public/logo_dark.svg" : "/public/logo_light.svg");
+    img.alt = "CURC LLM Chat";
+    img.setAttribute("data-curc-logo", "1");
+    img.classList.add("curc-welcome-logo");
+  }
+
+  function refreshCurcUi() {
+    hideCurcDisabledControls();
+    patchWelcomeLogo();
+    injectWelcomeNotice();
+  }
+
+  refreshCurcUi();
+  var uiObserver = new MutationObserver(refreshCurcUi);
   uiObserver.observe(document.documentElement, {
     childList: true,
     subtree: true,

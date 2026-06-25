@@ -42,6 +42,26 @@ def resolve_user_data_layer():
     return None
 
 
+def _profile_description(model: dict) -> str:
+    """Short blurb for the model picker (header / chat profile menu)."""
+    caps = model.get("capabilities", [])
+    tags = []
+    if "completion" in caps:
+        tags.append("Chat")
+    if "vision" in caps:
+        tags.append("Vision")
+    tag_line = " · ".join(tags) if tags else "Chat"
+
+    detail_lines = [
+        ln.strip()
+        for ln in model.get("description", "").split("\n")
+        if ln.strip() and not ln.strip().lower().startswith("capabilities:")
+    ]
+    summary = detail_lines[0] if detail_lines else "Available on this Ollama server."
+
+    return f"**{model['name']}** — {tag_line}\n\n{summary}"
+
+
 @cl.set_chat_profiles
 async def chat_profiles():
     models = await model_cache.refresh(client)
@@ -51,7 +71,7 @@ async def chat_profiles():
         profiles.append(
             cl.ChatProfile(
                 name=model["name"],
-                markdown_description=model["description"],
+                markdown_description=_profile_description(model),
             )
         )
     return profiles
