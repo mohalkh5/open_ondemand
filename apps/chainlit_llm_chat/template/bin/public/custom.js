@@ -218,10 +218,9 @@
           "</code>"
         : "") +
       "</p>" +
-      '<blockquote><strong>Note:</strong> This assistant was <strong>not</strong> trained on ' +
+      '<blockquote><strong>Please Note:</strong> This assistant was <strong>not</strong> trained on ' +
       '<a href="https://curc.readthedocs.io" target="_blank" rel="noopener noreferrer">' +
-      "CU Research Computing (CURC) documentation</a>.</blockquote>" +
-      '<p class="curc-welcome-hint">Choose a model in the header, type a message below, or pick a starter prompt.</p>';
+      "CU Research Computing (CURC) documentation</a>.</blockquote>" ;
 
     var composerRoot = textarea;
     while (composerRoot && composerRoot.parentElement !== screen) {
