@@ -6,14 +6,9 @@ echo $port, $host
 module load uv 
 source /curc/sw/uv_env/llm-chatbot-env/bin/activate
 
-# Free local voice: faster-whisper (STT on GPU) + edge-tts (spoken replies)
+# Hugging Face cache for faster-whisper (only needed if voice is re-enabled)
 export HF_HOME="${HF_HOME:-/projects/${USER}/.cache/huggingface}"
 mkdir -p "$HF_HOME"
-
-python -m pip install --quiet "faster-whisper>=1.0.0" "edge-tts>=6.1.0"
-if ! python -c "import faster_whisper, edge_tts" 2>/dev/null; then
-  echo "ERROR: voice packages failed to install; speech input/output will not work."
-fi
 
 # Optional per-user voice tuning (model size, TTS voice, etc.)
 if [[ -f "${HOME}/.curc_chat_env" ]]; then

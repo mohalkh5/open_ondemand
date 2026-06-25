@@ -6,10 +6,13 @@ logger.info(
     "CURC LLM chat starting: HPC /file path attachments ON, browser upload OFF"
 )
 
-from curc_chat.voice_deps import ensure_voice_packages
+try:
+    from curc_chat.voice_deps import ensure_voice_packages
 
-if not ensure_voice_packages():
-    logger.warning("Voice input/output disabled until faster-whisper and edge-tts install.")
+    if not ensure_voice_packages():
+        logger.warning("Voice input/output disabled (packages not installed).")
+except Exception as exc:
+    logger.warning("Voice dependency check skipped: %s", exc)
 
 from curc_chat.chainlit_handlers import (
     chat_profiles,
@@ -21,7 +24,11 @@ from curc_chat.chainlit_handlers import (
 )
 from curc_chat import action_handlers  # noqa: F401 — registers @cl.action_callback hooks
 from curc_chat import starters  # noqa: F401 — registers @cl.set_starters
-from curc_chat import voice_handlers  # noqa: F401 — registers @cl.on_audio_* hooks
+
+try:
+    from curc_chat import voice_handlers  # noqa: F401 — registers @cl.on_audio_* hooks
+except Exception as exc:
+    logger.warning("Voice handlers not loaded: %s", exc)
 
 __all__ = [
     "header_auth_callback",
