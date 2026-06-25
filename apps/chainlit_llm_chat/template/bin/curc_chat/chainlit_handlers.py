@@ -83,23 +83,8 @@ async def send_welcome_message() -> None:
     await cl.Message(
         content=(
             "> **Note:** This assistant was **not** trained on "
-            "[CU Research Computing (CURC) documentation](https://curc.readthedocs.io). "
-            "For official guidance on Alpine, Blanca, software modules, quotas, and policies, "
-            "use the CURC docs — answers here may be incomplete or incorrect.\n\n"
+            "[CU Research Computing (CURC) documentation](https://curc.readthedocs.io).\n\n"
             f"**CURC LLM Chat** — model: `{model}`\n\n"
-            "**Attach Alpine files (not browser upload):**\n"
-            "- `/file /projects/$USER/myfile.pdf` — one or more **file** paths\n"
-            "- Or put one absolute file path per line\n"
-            "- Paths must be **files**, not directories "
-            "(e.g. `/projects/mokh8410/report.pdf`, not `/projects/mokh8410`)\n"
-            "- Allowed roots: `/home/$USER`, `/projects/$USER`, "
-            "`/scratch/alpine/$USER`, `/pl/active/<allocation>/...`\n"
-            "- Use the **Files** app in "
-            "[Open OnDemand](https://curc.readthedocs.io/en/latest/open_ondemand/index.html) "
-            "to copy paths ([filesystem guide](https://curc.readthedocs.io/en/latest/compute/filesystems.html))\n\n"
-            "- Choose a model from the profile menu (vision models for images)\n"
-            "- Hold **P** for voice (local Whisper STT + spoken reply; no API key)\n"
-            "- Action buttons under replies: regenerate, copy code, new chat"
         ),
         actions=[
             cl.Action(
@@ -419,7 +404,7 @@ async def on_message(message: cl.Message):
         if additional_context:
             attached.append("text/PDF content")
         await cl.Message(
-            content=f"📎 **Attached from Alpine:** {', '.join(attached)}"
+            content=f"📎 **File attached from Alpine filesystem:** {', '.join(attached)}"
         ).send()
 
     if additional_context and PDF_EMPTY_MARKER in additional_context:
