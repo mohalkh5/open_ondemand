@@ -82,6 +82,10 @@ async def send_welcome_message() -> None:
     model = cl.user_session.get("model", "llama3.2")
     await cl.Message(
         content=(
+            "> **Note:** This assistant was **not** trained on "
+            "[CU Research Computing (CURC) documentation](https://curc.readthedocs.io). "
+            "For official guidance on Alpine, Blanca, software modules, quotas, and policies, "
+            "use the CURC docs — answers here may be incomplete or incorrect.\n\n"
             f"**CURC LLM Chat** — model: `{model}`\n\n"
             "**Attach Alpine files (not browser upload):**\n"
             "- `/file /projects/$USER/myfile.pdf` — one or more **file** paths\n"

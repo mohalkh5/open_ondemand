@@ -1,25 +1,35 @@
 <%-
 
   # Initialize an empty array to hold Slurm arguments
-  #
-  # NOTE: Preset-only mode.
-  # `config_type` is intentionally disabled in `form.yml.erb`, so users cannot
-  # submit custom Slurm directives. Keep the legacy custom branch commented
-  # further down for future restoration.
   base_slurm_args = ["--nodes=1", "--partition=atesting_a100", "--qos=testing"]
 
-  case preset_configuration
-    # set tasks and time based on provided selection
-    when "10x1x1alpine"
-      base_slurm_args += ["--ntasks=10", "--time=1:00:00", "--gres=gpu:1"]
-    else
-      base_slurm_args
+  if config_type == "presets"
+    case preset_configuration
+      when "10x1x1alpine"
+        base_slurm_args += ["--ntasks=10", "--time=1:00:00", "--gres=gpu:1"]
+      else
+        base_slurm_args
+    end
+  end
+
+  if config_type == "custom"
+    gres_value = gres.to_s.strip.downcase
+    gpu_count = 0
+    unless gres_value.blank? || gres_value == "none"
+      gres_value.scan(/gpu(?::[a-z0-9_-]+)*:(\d+)/i).each do |match|
+        gpu_count += match[0].to_i
+      end
+    end
+    if gpu_count < 1
+      raise "Custom configuration requires at least one GPU in gres (for example: gpu:1 or gpu:a100:1). Voice and local inference need a GPU on the compute node."
+    end
   end
 
 -%>
 ---
 
-# if presets set cluster to Alpine and use base_slurm_args to set Slurm directives 
+<% if config_type == "presets" -%>
+
 cluster: "alpine"
 script:
   copy_environment: true
@@ -28,41 +38,30 @@ script:
       - <%= arg %>
     <% end %>
 
-# ---------------------------------------------------------------------------
-# Archived (disabled): config_type-based preset/custom branching
-# ---------------------------------------------------------------------------
-#
-# <% if config_type == "presets" -%>
-# cluster: "alpine"
-# script:
-#   copy_environment: true
-#   native:
-#     <% base_slurm_args.each do |arg| %>
-#       - <%= arg %>
-#     <% end %>
-# <% else -%>
-# script:
-#   copy_environment: true
-#   native:
-#     - "--nodes=1"
-#     - "--ntasks=<%#= num_cores %>"
-#     - "--account=<%#= account %>"
-#     - "--partition=<%#= partition_name %>"
-#     - "--qos=<%#= qos_name %>"
-#     - "--time=<%#= num_hours %>:00:00"
-#     <%# if reservation.downcase != "none" %>
-#     - "--reservation=<%#= reservation %>"
-#     <%# end %>
-#     <%# if gres.downcase != "none" %>
-#     - "--gres=<%#= gres %>"
-#     <%# end %>
-#     <%# if nodelist.downcase != "none" %>
-#     - "--nodelist=<%#= nodelist %>"
-#     <%# end %>
-#     <%# if constraint.downcase != "none" %>
-#     - "--constraint=<%#= constraint %>"
-#     <%# end %>
-# <% end -%>
+<% else -%>
+
+cluster: "<%= cluster %>"
+script:
+  copy_environment: true
+  native:
+    - "--nodes=1"
+    - "--ntasks=<%= num_cores %>"
+    - "--account=<%= account %>"
+    - "--partition=<%= partition_name %>"
+    - "--qos=<%= qos_name %>"
+    - "--time=<%= num_hours %>:00:00"
+    <% if reservation.downcase != "none" %>
+    - "--reservation=<%= reservation %>"
+    <% end %>
+    - "--gres=<%= gres %>"
+    <% if nodelist.downcase != "none" %>
+    - "--nodelist=<%= nodelist %>"
+    <% end %>
+    <% if constraint.downcase != "none" %>
+    - "--constraint=<%= constraint %>"
+    <% end %>
+
+<% end -%>
 
 batch_connect:
   template: "basic"

@@ -65,6 +65,10 @@ CODE_EXTENSIONS = {
     ".conf",
     ".csv",
     ".log",
+    ".out",
+    ".err",
+    ".mdwn",
+    ".ipynb",
     ".vue",
     ".svelte",
 }
@@ -97,7 +101,7 @@ def process_paths(paths: List[Path]) -> Tuple[str, List[str]]:
 
         elif (
             ext in CODE_EXTENSIONS
-            or ext in {".txt", ".md", ".markdown", ".rst", ""}
+            or ext in {".txt", ".md", ".markdown", ".mdwn", ".rst", ""}
             or name.lower() in {"dockerfile", "makefile", "gemfile", "rakefile"}
         ):
             additional_context += _read_text_path(path)

@@ -57,7 +57,8 @@ attributes:
      value: None
   gres:
      widget: text_field
-     label: gres options (default is None)
+     label: "gres (GPU required for custom jobs)"
+     help: "Custom configuration must request at least one GPU (for example gpu:1 or gpu:a100:1). Leave as None only when using a preset."
      value: None
   nodelist:
      widget: text_field
