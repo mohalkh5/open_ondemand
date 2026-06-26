@@ -57,9 +57,9 @@ def _profile_description(model: dict) -> str:
         for ln in model.get("description", "").split("\n")
         if ln.strip() and not ln.strip().lower().startswith("capabilities:")
     ]
-    summary = detail_lines[0] if detail_lines else "Available on this Ollama server."
+    summary = "\n".join(detail_lines) if detail_lines else "Available on this Ollama server."
 
-    return f"**{model['name']}** — {tag_line}\n\n{summary}"
+    return f"**{model['name']}** - {tag_line}\n\n{summary}"
 
 
 @cl.set_chat_profiles
