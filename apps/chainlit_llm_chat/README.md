@@ -4,18 +4,15 @@ This repository packages a Chainlit chat UI that talks to **Ollama**, persists c
 
 ## How it is launched on CURC
 
-Open OnDemand stages only the small job scripts under `template/` into each user's batch connect output directory.
+Open OnDemand stages the contents of `template/` (job scripts + `template/app/`) into each session's output directory. The job script runs Chainlit from the first available location:
 
-Each job activates the shared Python env, loads Ollama, and runs Chainlit 
+1. `/curc/sw/uv_env/llm-chatbot-env/app/` (shared install, preferred when populated)
+2. `app/` next to the job scripts (OOD-staged copy)
 
-```bash
-rsync -a app/ /curc/sw/uv_env/llm-chatbot-env/app/
-```
-
-For local development, override the path:
+To avoid relying on the per-session staged copy, populate the shared path when releasing:
 
 ```bash
-export CHAINLIT_APP_DIR=/path/to/checkout/app
+rsync -a template/app/ /curc/sw/uv_env/llm-chatbot-env/app/
 ```
 
 Chat history is stored under `/projects/${USER}/.chainlit_data`.
@@ -24,27 +21,21 @@ Chat history is stored under `/projects/${USER}/.chainlit_data`.
 
 ```text
 requirements.txt              # Python dependencies (install in the shared venv on CURC)
-app/                          # Chainlit application (deploy into llm-chatbot-env/app on CURC)
-  app.py                      # Thin entrypoint: logging + re-exports Chainlit callbacks
-  system_prompt.txt           # System prompt for the model
-  chainlit_en-US.md           # Chainlit welcome/readme copy (en-US)
-  .chainlit/config.toml       # Chainlit UI / feature settings
-  public/                     # Static assets (CSS, JS, logos)
-  curc_chat/                  # Application logic
 template/
-  script.sh.erb               # OOD job: modules, env, chainlit run from shared path
+  script.sh.erb               # OOD job: modules, env, chainlit run
   before.sh.erb               # OOD hook
   after.sh                    # OOD hook
+  app/                        # Chainlit application (staged by OOD; also rsync to /curc/sw/ on release)
 form.yml.erb                  # OOD job form
 submit.yml.erb                # Slurm submission template
 ```
 
 ## Local or manual run
 
-From the `app` directory:
+From `template/app`:
 
 ```bash
-cd app
-python -m pip install -r ../requirements.txt
+cd template/app
+python -m pip install -r ../../requirements.txt
 chainlit run app.py
 ```
