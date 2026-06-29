@@ -220,7 +220,7 @@
       document.documentElement.classList.contains("dark") ||
       window.matchMedia("(prefers-color-scheme: dark)").matches;
     var base = window.location.pathname.replace(/\/?$/, "");
-    img.src = base + (isDark ? "/public/logo_dark.svg" : "/public/logo_light.svg");
+    img.src = base + (isDark ? "/public/logo_dark.png" : "/public/logo_light.png");
     img.alt = "CURC LLM Chat";
     img.setAttribute("data-curc-logo", "1");
     img.classList.add("curc-welcome-logo");

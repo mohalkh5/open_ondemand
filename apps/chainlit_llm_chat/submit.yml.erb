@@ -12,19 +12,6 @@
     end
   end
 
-  if config_type == "custom"
-    gres_value = gres.to_s.strip.downcase
-    gpu_count = 0
-    unless gres_value.blank? || gres_value == "none"
-      gres_value.scan(/gpu(?::[a-z0-9_-]+)*:(\d+)/i).each do |match|
-        gpu_count += match[0].to_i
-      end
-    end
-    if gpu_count < 1
-      raise "Custom configuration requires at least one GPU in gres (for example: gpu:1)."
-    end
-  end
-
 -%>
 ---
 
@@ -53,7 +40,9 @@ script:
     <% if reservation.downcase != "none" %>
     - "--reservation=<%= reservation %>"
     <% end %>
+    <% if gres.downcase != "none" %>
     - "--gres=<%= gres %>"
+    <% end %>
     <% if nodelist.downcase != "none" %>
     - "--nodelist=<%= nodelist %>"
     <% end %>

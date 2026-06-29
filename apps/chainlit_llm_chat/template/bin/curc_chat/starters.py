@@ -1,37 +1,37 @@
-"""HPC-themed conversation starters for the Chainlit welcome screen."""
+"""Generic coding conversation starters for the Chainlit welcome screen."""
 
 import chainlit as cl
 
-HPC_STARTERS = [
+CODING_STARTERS = [
     cl.Starter(
-        label="Cluster computing basics",
+        label="Explain a concept",
         message=(
-            "Explain high-performance computing in plain language: login vs compute nodes, "
-            "job schedulers, queues, and why shared clusters are different from a laptop."
+            "Explain recursion in plain language with a simple example. "
+            "Keep it conceptual and avoid assuming any specific tools or environment."
         ),
         icon="/public/learn.svg",
     ),
     cl.Starter(
-        label="Plan a batch workflow",
+        label="Plan a small project",
         message=(
-            "Walk me through a typical batch workflow on a shared cluster: choosing resources, "
-            "submitting a job, monitoring progress, and collecting outputs. Keep it conceptual."
+            "Help me plan the structure for a small Python command-line tool. "
+            "Suggest a simple layout for source files, tests, and dependencies."
         ),
         icon="/public/workflow.svg",
     ),
     cl.Starter(
-        label="Python on shared systems",
+        label="Python best practices",
         message=(
-            "What are good practices for running Python on a shared HPC system? "
-            "Cover virtual environments, dependencies, and being a good neighbor on shared storage."
+            "What are good general practices for organizing a Python project? "
+            "Cover virtual environments, dependency management, and basic testing."
         ),
         icon="/public/terminal.svg",
     ),
     cl.Starter(
-        label="Debug a stuck job",
+        label="Debug step by step",
         message=(
-            "My batch job seems stuck or much slower than expected. "
-            "Give me a practical troubleshooting checklist I can work through step by step."
+            "My program is failing with an error I do not understand. "
+            "Walk me through a practical debugging checklist I can follow step by step."
         ),
         icon="/public/debug.svg",
     ),
@@ -40,4 +40,4 @@ HPC_STARTERS = [
 
 @cl.set_starters
 async def set_starters():
-    return HPC_STARTERS
+    return CODING_STARTERS

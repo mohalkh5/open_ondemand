@@ -24,8 +24,7 @@ template/
   bin/
     app.py                    # Thin entrypoint: logging + re-exports Chainlit callbacks
     system_prompt.txt         # System prompt for the model
-    chainlit.md               # Default welcome copy
-    chainlit_en-US.md         
+    chainlit_en-US.md         # Chainlit welcome/readme copy (en-US)
     .chainlit/config.toml     # Chainlit UI / feature settings
     public/                   # Static assets (e.g. theme)
     curc_chat/                # Application logic (refactored package)
@@ -54,7 +53,3 @@ cd template/bin
 python -m pip install -r ../../requirements.txt
 chainlit run app.py
 ```
-
-## Documentation
-
-CU Research Computing documentation hub: [Navigating CURC Documentation](https://curc.readthedocs.io/en/latest/getting_started/navigating_docs.html).
