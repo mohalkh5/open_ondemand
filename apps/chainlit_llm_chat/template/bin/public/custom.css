@@ -11,20 +11,6 @@ input[type="file"] {
   pointer-events: none !important;
 }
 
-/* Voice / microphone input — hidden until the feature is re-enabled */
-button[aria-label="Start recording"],
-button[aria-label="Stop recording"],
-button[aria-label="Record"],
-button[aria-label*="recording"],
-button[aria-label*="Recording"],
-button[aria-label*="microphone"],
-button[aria-label*="Microphone"],
-[data-testid="audio-button"],
-[data-testid="speech-button"] {
-  display: none !important;
-  pointer-events: none !important;
-}
-
 /* Human feedback (thumbs) — UI hidden; chat persistence unchanged */
 button[aria-label="Helpful"],
 button[aria-label="Not helpful"],

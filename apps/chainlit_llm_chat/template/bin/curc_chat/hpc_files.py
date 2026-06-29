@@ -46,23 +46,6 @@ def _is_under_root(path: Path, root: Path) -> bool:
     except ValueError:
         return False
 
-
-# def _assert_symlink_allowed(path: Path, resolved: Path, allowed_roots: List[Path]) -> None:
-#     """
-#     Future: reject symlinks that resolve outside allowed CURC roots.
-#     Walk path components and ensure no symlink escapes the allowed prefix set.
-#     """
-#     current = Path("/")
-#     for part in path.parts[1:]:
-#         current = current / part
-#         if current.is_symlink():
-#             link_target = current.resolve()
-#             if not any(_is_under_root(link_target, root) for root in allowed_roots):
-#                 raise ValueError(
-#                     f"Symlink {current} points outside allowed filesystem roots."
-#                 )
-
-
 def validate_hpc_path(raw_path: str, username: Optional[str] = None) -> Path:
     """Resolve *raw_path* and ensure it is a readable file under allowed CURC roots."""
     username = username or get_username()
@@ -78,8 +61,6 @@ def validate_hpc_path(raw_path: str, username: Optional[str] = None) -> Path:
         raise ValueError(f"Path must be absolute on Alpine: {raw_path}")
 
     resolved = path.resolve()
-
-    # _assert_symlink_allowed(path, resolved, allowed_roots)
 
     if not any(_is_under_root(resolved, root) for root in allowed_roots):
         allowed_display = ", ".join(str(r) for r in allowed_roots)

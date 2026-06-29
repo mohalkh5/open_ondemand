@@ -28,7 +28,7 @@ def find_vision_model_name() -> Optional[str]:
     for model in models:
         if "vision" in model.get("capabilities", []):
             name = model.get("name", "")
-            if name and not name.startswith("No models"):
+            if name:
                 return name
     return None
 

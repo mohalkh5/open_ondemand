@@ -84,8 +84,13 @@ def get_user_data_layer():
 
 def init_chat_session() -> None:
     """Reset per-chat session state (used on start and 'New chat' action)."""
-    chat_profile = cl.user_session.get("chat_profile") or "llama3.2"
-    model_info = model_cache.get_model_info(chat_profile)
+    models = model_cache.models or []
+    chat_profile = cl.user_session.get("chat_profile")
+    if not chat_profile and models:
+        chat_profile = models[0]["name"]
+    model_info = (
+        model_cache.get_model_info(chat_profile) if chat_profile else {}
+    )
 
     cl.user_session.set("model", chat_profile)
     cl.user_session.set("model_info", model_info)
@@ -95,38 +100,12 @@ def init_chat_session() -> None:
     cl.user_session.set("thread_created", False)
 
 
-async def send_welcome_message() -> None:
-    """
-    Welcome copy as a chat message (New chat action included).
-
-    Not sent on @cl.on_chat_start — any message hides Chainlit's empty-state welcome
-    screen (logo, starters). The same disclaimer is shown via public/custom.js instead.
-    """
-    from curc_chat.message_actions import ACTION_NEW_CHAT
-
-    model = cl.user_session.get("model", "llama3.2")
-    await cl.Message(
-        content=(
-            "> **Note:** This assistant was **not** trained on "
-            "[CU Research Computing (CURC) documentation](https://curc.readthedocs.io).\n\n"
-            f"**CURC LLM Chat Interface** — model: `{model}`\n\n"
-        ),
-        actions=[
-            cl.Action(
-                name=ACTION_NEW_CHAT,
-                label="New chat",
-                icon="message-square-plus",
-                description="Clear this session and start fresh",
-                payload={},
-            )
-        ],
-    ).send()
-
-
 @cl.on_chat_start
 async def on_chat_start():
     init_chat_session()
-    # Welcome UI (logo, disclaimer, starters) is the empty-state screen in custom.js.
+    # Welcome disclaimer is injected on the empty-state screen in public/custom.js.
+    if model_cache.load_error:
+        await cl.Message(content=f"❌ **{model_cache.load_error}**").send()
 
 
 @cl.on_chat_resume
@@ -149,9 +128,15 @@ async def on_chat_resume(thread: dict):
     cl.user_session.set("thread_created", True)
 
     metadata = thread.get("metadata", {})
-    model = metadata.get("model", "llama3.2")
+    model = metadata.get("model")
     cl.user_session.set("model", model)
-    cl.user_session.set("model_info", model_cache.get_model_info(model))
+    cl.user_session.set(
+        "model_info",
+        model_cache.get_model_info(model) if model else {},
+    )
+
+    if model_cache.load_error:
+        await cl.Message(content=f"❌ **{model_cache.load_error}**").send()
 
 
 async def send_animated_message(
@@ -203,22 +188,6 @@ async def _ensure_thread_created(title: str, model: str) -> None:
         logger.warning(f"Error creating thread: {e}")
 
 
-async def _attach_spoken_reply(response_message: cl.Message, text: str) -> None:
-    """Add auto-play TTS audio to an assistant message (free edge-tts backend)."""
-    try:
-        from curc_chat.tts import synthesize_speech
-
-        audio_bytes, mime = await synthesize_speech(text)
-        if not audio_bytes:
-            return
-        response_message.elements = [
-            cl.Audio(auto_play=True, mime=mime, content=audio_bytes)
-        ]
-        await response_message.update()
-    except Exception:
-        logger.warning("Spoken reply failed (text reply still shown)", exc_info=True)
-
-
 def _build_ollama_messages(
     system_prompt: str,
     message_history: List[dict],
@@ -265,11 +234,20 @@ async def handle_user_turn(
     images: Optional[List[str]] = None,
     *,
     skip_user_append: bool = False,
-    speak_response: bool = False,
     history_content: Optional[str] = None,
 ) -> None:
-    """Run one chat turn against Ollama (shared by text and voice input)."""
-    model = cl.user_session.get("model", "llama3.2")
+    """Run one chat turn against Ollama."""
+    if model_cache.load_error:
+        await cl.Message(content=f"❌ **{model_cache.load_error}**").send()
+        return
+
+    model = cl.user_session.get("model")
+    if not model:
+        await cl.Message(
+            content="❌ **Error fetching models.**"
+        ).send()
+        return
+
     model_info = cl.user_session.get("model_info", {})
     message_history = cl.user_session.get("message_history", [])
     system_prompt = cl.user_session.get("system_prompt", "")
@@ -354,9 +332,6 @@ async def handle_user_turn(
             if response_message.id:
                 remember_message_content(response_message.id, full_response)
             await response_message.update()
-
-            if speak_response and full_response.strip():
-                await _attach_spoken_reply(response_message, full_response)
             logger.info("Ollama reply: model=%s chars=%d", model, len(full_response))
         else:
             animation_task.cancel()
@@ -397,7 +372,17 @@ async def handle_user_turn(
 
 @cl.on_message
 async def on_message(message: cl.Message):
-    model = cl.user_session.get("model", "llama3.2")
+    if model_cache.load_error:
+        await cl.Message(content=f"❌ **{model_cache.load_error}**").send()
+        return
+
+    model = cl.user_session.get("model")
+    if not model:
+        await cl.Message(
+            content="❌ **Error fetching models.**"
+        ).send()
+        return
+
     model_info = cl.user_session.get("model_info", {})
 
     if message.elements:
@@ -488,6 +473,5 @@ __all__ = [
     "get_user_data_layer",
     "handle_user_turn",
     "init_chat_session",
-    "send_welcome_message",
     "_ensure_thread_created",
 ]

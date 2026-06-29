@@ -1,12 +1,15 @@
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 
 from ollama import AsyncClient
 
 logger = logging.getLogger(__name__)
 
+_MODEL_FETCH_ERROR = "Error fetching models."
 
-async def get_available_models(client: AsyncClient) -> List[Dict[str, Any]]:
+
+async def get_available_models(client: AsyncClient) -> Tuple[List[Dict[str, Any]], Optional[str]]:
+    """Return (models, error_message). error_message is set when listing fails or finds no models."""
     try:
         response = await client.list()
         models = []
@@ -38,29 +41,14 @@ async def get_available_models(client: AsyncClient) -> List[Dict[str, Any]]:
                 )
 
         if not models:
-            return [
-                _create_fallback_model(
-                    "No models found", "Pull a model e.g. ollama pull llama3.2", ["completion"]
-                )
-            ]
+            logger.warning("No Ollama models found")
+            return [], _MODEL_FETCH_ERROR
 
-        return models
+        return models, None
 
     except Exception as e:
-        logger.warning(f"Error fetching models from Ollama: {e}")
-        return [
-            _create_fallback_model(
-                "No models found", "Pull a model e.g. ollama pull llama3.2", ["completion"]
-            )
-        ]
-
-
-def _create_fallback_model(name: str, description: str, capabilities: List[str]) -> Dict[str, Any]:
-    return {
-        "name": name,
-        "description": description,
-        "capabilities": capabilities,
-    }
+        logger.warning("Error fetching models from Ollama: %s", e)
+        return [], _MODEL_FETCH_ERROR
 
 
 class ModelCache:
@@ -68,13 +56,18 @@ class ModelCache:
 
     def __init__(self):
         self._models: Optional[List[Dict[str, Any]]] = None
+        self._load_error: Optional[str] = None
 
     @property
     def models(self) -> Optional[List[Dict[str, Any]]]:
         return self._models
 
+    @property
+    def load_error(self) -> Optional[str]:
+        return self._load_error
+
     async def refresh(self, client: AsyncClient) -> List[Dict[str, Any]]:
-        self._models = await get_available_models(client)
+        self._models, self._load_error = await get_available_models(client)
         return self._models
 
     def get_model_info(self, model_name: str) -> Dict[str, Any]:

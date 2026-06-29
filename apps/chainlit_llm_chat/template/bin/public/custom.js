@@ -150,42 +150,12 @@
     });
   }
 
-  /** Hide voice/mic controls (backup if features.audio is stale on server). */
-  function hideVoiceControls() {
-    var selectors = [
-      'button[aria-label="Start recording"]',
-      'button[aria-label="Stop recording"]',
-      'button[aria-label="Record"]',
-      '[data-testid="audio-button"]',
-      '[data-testid="speech-button"]',
-    ];
-    selectors.forEach(function (sel) {
-      document.querySelectorAll(sel).forEach(function (el) {
-        el.style.display = "none";
-        el.setAttribute("disabled", "true");
-        el.setAttribute("aria-hidden", "true");
-      });
-    });
-    document.querySelectorAll("button[aria-label]").forEach(function (el) {
-      var label = (el.getAttribute("aria-label") || "").toLowerCase();
-      if (
-        label.indexOf("recording") !== -1 ||
-        label.indexOf("microphone") !== -1
-      ) {
-        el.style.display = "none";
-        el.setAttribute("disabled", "true");
-        el.setAttribute("aria-hidden", "true");
-      }
-    });
-  }
-
   function hideCurcDisabledControls() {
     hideAttachControls();
-    hideVoiceControls();
     hideFeedbackControls();
   }
 
-  /** CURC welcome copy on the empty-state screen (logo → notice → input → starters). */
+  /** Canonical CURC welcome disclaimer (empty-state screen only; see chainlit_handlers.on_chat_start). */
   function injectWelcomeNotice() {
     var screen = document.getElementById("welcome-screen");
     if (!screen || screen.querySelector("#curc-welcome-notice")) {
@@ -218,9 +188,12 @@
           "</code>"
         : "") +
       "</p>" +
-      '<blockquote><strong>Please Note:</strong> This assistant was <strong>not</strong> trained on ' +
+      '<blockquote><strong>Please note:</strong> This assistant was <strong>not</strong> trained on ' +
       '<a href="https://curc.readthedocs.io" target="_blank" rel="noopener noreferrer">' +
-      "CU Research Computing (CURC) documentation</a>.</blockquote>" ;
+      "CU Research Computing (CURC) documentation</a>. " +
+      "Because of that, information about CURC-specific systems&mdash;clusters, software modules, " +
+      "queues, filesystems, policies, or procedures&mdash;may be <strong>incorrect</strong>. " +
+      "Always verify important details in the official documentation or with CURC support.</blockquote>";
 
     var composerRoot = textarea;
     while (composerRoot && composerRoot.parentElement !== screen) {

@@ -6,11 +6,7 @@ echo $port, $host
 module load uv 
 source /curc/sw/uv_env/llm-chatbot-env/bin/activate
 
-# Hugging Face cache for faster-whisper (only needed if voice is re-enabled)
-export HF_HOME="${HF_HOME:-/projects/${USER}/.cache/huggingface}"
-mkdir -p "$HF_HOME"
-
-# Optional per-user voice tuning (model size, TTS voice, etc.)
+# Optional per-user environment overrides
 if [[ -f "${HOME}/.curc_chat_env" ]]; then
   # shellcheck disable=SC1091
   source "${HOME}/.curc_chat_env"

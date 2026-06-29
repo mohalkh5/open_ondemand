@@ -62,9 +62,7 @@ favorites = false
     max_size_mb = 500
 
 [features.audio]
-    # Microphone / hold-P voice input (disabled until re-enabled as a product feature)
     enabled = false
-    # Sample rate of the audio (must match PCM format in voice_handlers)
     sample_rate = 24000
 
 [features.mcp]
