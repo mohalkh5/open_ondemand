@@ -6,10 +6,10 @@ This repository packages a Chainlit chat UI that talks to **Ollama**, persists c
 
 Open OnDemand stages only the small job scripts under `template/` into each user's batch connect output directory.
 
-Each job activates the shared Python env, loads Ollama, and runs Chainlit from:
+Each job activates the shared Python env, loads Ollama, and runs Chainlit 
 
-```
-/curc/sw/uv_env/llm-chatbot-env/app/
+```bash
+rsync -a app/ /curc/sw/uv_env/llm-chatbot-env/app/
 ```
 
 For local development, override the path:

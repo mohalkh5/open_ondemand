@@ -22,10 +22,26 @@ fi
 # Location of chat history (use projects instead of scratch)
 export CHAINLIT_DATA_DIR="/projects/${USER}/.chainlit_data"
 
-# Run from shared storage colocated with the llm-chatbot-env.
-CHAINLIT_APP_DIR="${CHAINLIT_APP_DIR:-/curc/sw/uv_env/llm-chatbot-env/app}"
-if [[ ! -f "${CHAINLIT_APP_DIR}/app.py" ]]; then
-  echo "ERROR: Chainlit app not found at ${CHAINLIT_APP_DIR}."
+_script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CHAINLIT_APP_DIR=""
+for _candidate in \
+  "${CHAINLIT_APP_DIR:-}" \
+  "/curc/sw/uv_env/llm-chatbot-env/app" \
+  "${_script_dir}/app" \
+  "${_script_dir}/bin"; do
+  if [[ -n "${_candidate}" && -f "${_candidate}/app.py" ]]; then
+    CHAINLIT_APP_DIR="${_candidate}"
+    break
+  fi
+done
+
+if [[ -z "${CHAINLIT_APP_DIR}" ]]; then
+  echo "ERROR: Chainlit app not found."
+  echo "Expected app.py under one of:"
+  echo "  /curc/sw/uv_env/llm-chatbot-env/app"
+  echo "  ${_script_dir}/app"
+  echo "  ${_script_dir}/bin"
+  echo "Populate the shared path when releasing: rsync -a app/ /curc/sw/uv_env/llm-chatbot-env/app/"
   exit 1
 fi
 
