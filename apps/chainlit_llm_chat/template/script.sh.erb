@@ -3,7 +3,7 @@
 export XDG_RUNTIME_DIR="/tmp/${UID}"
 
 echo $port, $host
-module load uv 
+module load uv
 source /curc/sw/uv_env/llm-chatbot-env/bin/activate
 
 # Optional per-user environment overrides
@@ -22,8 +22,15 @@ fi
 # Location of chat history (use projects instead of scratch)
 export CHAINLIT_DATA_DIR="/projects/${USER}/.chainlit_data"
 
-sleep 5 
+# Run from shared storage colocated with the llm-chatbot-env.
+CHAINLIT_APP_DIR="${CHAINLIT_APP_DIR:-/curc/sw/uv_env/llm-chatbot-env/app}"
+if [[ ! -f "${CHAINLIT_APP_DIR}/app.py" ]]; then
+  echo "ERROR: Chainlit app not found at ${CHAINLIT_APP_DIR}."
+  exit 1
+fi
 
-cd bin 
+sleep 5
+
+cd "${CHAINLIT_APP_DIR}"
 echo "CURC chat app dir: $(pwd)"
 chainlit run --root-path /node/${host}/${port} --port $port --debug --host $(hostname -I) app.py

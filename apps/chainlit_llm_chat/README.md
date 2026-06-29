@@ -4,52 +4,47 @@ This repository packages a Chainlit chat UI that talks to **Ollama**, persists c
 
 ## How it is launched on CURC
 
-The OOD batch template runs the app from the `bin` directory:
+Open OnDemand stages only the small job scripts under `template/` into each user's batch connect output directory.
 
-```bash
-cd bin
-chainlit run --root-path /node/${host}/${port} --port $port --debug --host $(hostname -I) app.py
+Each job activates the shared Python env, loads Ollama, and runs Chainlit from:
+
+```
+/curc/sw/uv_env/llm-chatbot-env/app/
 ```
 
-That path is defined in `template/script.sh.erb`.
+For local development, override the path:
+
+```bash
+export CHAINLIT_APP_DIR=/path/to/checkout/app
+```
+
+Chat history is stored under `/projects/${USER}/.chainlit_data`.
 
 ## Project layout
 
 ```text
-requirements.txt              # Python dependencies (install in your venv on CURC)
+requirements.txt              # Python dependencies (install in the shared venv on CURC)
+app/                          # Chainlit application (deploy into llm-chatbot-env/app on CURC)
+  app.py                      # Thin entrypoint: logging + re-exports Chainlit callbacks
+  system_prompt.txt           # System prompt for the model
+  chainlit_en-US.md           # Chainlit welcome/readme copy (en-US)
+  .chainlit/config.toml       # Chainlit UI / feature settings
+  public/                     # Static assets (CSS, JS, logos)
+  curc_chat/                  # Application logic
 template/
-  script.sh.erb               # OOD job: modules, env, then `cd bin` + `chainlit run app.py`
+  script.sh.erb               # OOD job: modules, env, chainlit run from shared path
   before.sh.erb               # OOD hook
-  after.sh.erb                # OOD hook
-  bin/
-    app.py                    # Thin entrypoint: logging + re-exports Chainlit callbacks
-    system_prompt.txt         # System prompt for the model
-    chainlit_en-US.md         # Chainlit welcome/readme copy (en-US)
-    .chainlit/config.toml     # Chainlit UI / feature settings
-    public/                   # Static assets (e.g. theme)
-    curc_chat/                # Application logic (refactored package)
-      __init__.py
-      settings.py             # Paths / env (e.g. OLLAMA_HOST, system prompt path)
-      security.py             # POSIX file permission helper
-      uploads.py              # Attachments: text, PDF, images for the model
-      auth.py                 # Header auth + per-user token file (~/.chainlit_auth_token)
-      chainlit_handlers.py    # @cl.on_message, profiles, data layer wiring, Ollama streaming
-      models/
-        ollama_models.py      # Ollama model list + cache
-      storage/
-        sqlite_layer.py       # SQLite BaseDataLayer implementation
-    auth.py
-    data_layer.py
-    models.py
-    utils.py
+  after.sh                    # OOD hook
+form.yml.erb                  # OOD job form
+submit.yml.erb                # Slurm submission template
 ```
 
 ## Local or manual run
 
-From the `template/bin` directory:
+From the `app` directory:
 
 ```bash
-cd template/bin
-python -m pip install -r ../../requirements.txt
+cd app
+python -m pip install -r ../requirements.txt
 chainlit run app.py
 ```
