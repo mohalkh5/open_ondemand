@@ -191,8 +191,8 @@
       '<blockquote><strong>Please note:</strong> This assistant was <strong>not</strong> trained on ' +
       '<a href="https://curc.readthedocs.io" target="_blank" rel="noopener noreferrer">' +
       "CU Research Computing (CURC) documentation</a>. " +
-      "Because of that, information about CURC-specific systems&mdash;clusters, software modules, " +
-      "queues, filesystems, policies, or procedures&mdash;may be <strong>incorrect</strong>. " +
+      "Because of that, information about CURC-specific clusters, software modules, " +
+      "queues, filesystems, policies, or procedures, may be <strong>incorrect</strong>. " +
       "Always verify important details in the official documentation or with CURC support.</blockquote>";
 
     var composerRoot = textarea;
