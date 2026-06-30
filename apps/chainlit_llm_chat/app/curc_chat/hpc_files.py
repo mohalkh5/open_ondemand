@@ -174,6 +174,9 @@ def process_hpc_attachments(
         [str(p) for p in paths],
         errors,
     )
+    if errors:
+        return clean_message, "", [], errors, []
+
     if not paths:
         return clean_message, "", [], errors, []
 

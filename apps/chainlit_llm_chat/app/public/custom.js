@@ -155,8 +155,69 @@
     hideFeedbackControls();
   }
 
+  var cachedChatProfiles = null;
+
+  function appBasePath() {
+    return window.location.pathname.replace(/\/?$/, "");
+  }
+
+  function fetchChatProfiles(cb) {
+    if (cachedChatProfiles) {
+      cb(cachedChatProfiles);
+      return;
+    }
+    fetch(appBasePath() + "/project/settings", { credentials: "same-origin" })
+      .then(function (res) {
+        return res.ok ? res.json() : null;
+      })
+      .then(function (data) {
+        cachedChatProfiles = (data && data.chatProfiles) || [];
+        cb(cachedChatProfiles);
+      })
+      .catch(function () {
+        cb([]);
+      });
+  }
+
+  function resolveActiveModelLabel(cb) {
+    var trigger = document.getElementById("chat-profiles");
+    if (trigger) {
+      var text = (trigger.textContent || "").trim();
+      if (text && text !== "Select profile") {
+        cb(text);
+        return;
+      }
+    }
+    fetchChatProfiles(function (profiles) {
+      if (profiles.length === 1) {
+        var profile = profiles[0];
+        cb(profile.display_name || profile.name || "");
+        return;
+      }
+      cb("");
+    });
+  }
+
+  function injectHeaderModelBadge(modelLabel) {
+    if (!modelLabel) {
+      return;
+    }
+    var header = document.querySelector("header");
+    if (!header) {
+      return;
+    }
+    var badge = document.getElementById("curc-header-model");
+    if (!badge) {
+      badge = document.createElement("span");
+      badge.id = "curc-header-model";
+      badge.className = "curc-header-model";
+      header.appendChild(badge);
+    }
+    badge.textContent = "Model: " + modelLabel;
+  }
+
   /** Canonical CURC welcome disclaimer (empty-state screen only; see chainlit_handlers.on_chat_start). */
-  function injectWelcomeNotice() {
+  function injectWelcomeNotice(modelLabel) {
     var screen = document.getElementById("welcome-screen");
     if (!screen || screen.querySelector("#curc-welcome-notice")) {
       return;
@@ -165,17 +226,6 @@
     if (!textarea) {
       return;
     }
-
-    var modelLabel = "";
-    document.querySelectorAll("button[aria-label]").forEach(function (btn) {
-      if (modelLabel) {
-        return;
-      }
-      var label = (btn.getAttribute("aria-label") || "").toLowerCase();
-      if (label.indexOf("profile") !== -1 || label.indexOf("model") !== -1) {
-        modelLabel = (btn.textContent || "").trim();
-      }
-    });
 
     var notice = document.createElement("div");
     notice.id = "curc-welcome-notice";
@@ -206,6 +256,17 @@
     }
   }
 
+  function isDarkTheme() {
+    var root = document.documentElement;
+    if (root.classList.contains("dark")) {
+      return true;
+    }
+    if (root.classList.contains("light")) {
+      return false;
+    }
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  }
+
   /** Point the welcome logo at CURC branding (works with OOD root-path relative URLs). */
   function patchWelcomeLogo() {
     var screen = document.getElementById("welcome-screen");
@@ -213,23 +274,28 @@
       return;
     }
     var img = screen.querySelector("img");
-    if (!img || img.getAttribute("data-curc-logo")) {
+    if (!img) {
       return;
     }
-    var isDark =
-      document.documentElement.classList.contains("dark") ||
-      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var theme = isDarkTheme() ? "dark" : "light";
+    if (img.getAttribute("data-curc-logo-theme") === theme) {
+      return;
+    }
     var base = window.location.pathname.replace(/\/?$/, "");
-    img.src = base + (isDark ? "/public/logo_dark.png" : "/public/logo_light.png");
+    img.src = base + "/logo?theme=" + theme;
     img.alt = "CURC LLM Chat";
     img.setAttribute("data-curc-logo", "1");
+    img.setAttribute("data-curc-logo-theme", theme);
     img.classList.add("curc-welcome-logo");
   }
 
   function refreshCurcUi() {
     hideCurcDisabledControls();
     patchWelcomeLogo();
-    injectWelcomeNotice();
+    resolveActiveModelLabel(function (modelLabel) {
+      injectHeaderModelBadge(modelLabel);
+      injectWelcomeNotice(modelLabel);
+    });
   }
 
   refreshCurcUi();
@@ -237,5 +303,7 @@
   uiObserver.observe(document.documentElement, {
     childList: true,
     subtree: true,
+    attributes: true,
+    attributeFilter: ["class"],
   });
 })();

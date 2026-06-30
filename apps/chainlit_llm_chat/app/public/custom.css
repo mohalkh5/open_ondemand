@@ -54,9 +54,21 @@ button[aria-label="Edit feedback"] {
   font-size: 0.85rem;
 }
 
-.curc-welcome-notice blockquote a {
-  color: hsl(var(--primary));
+.curc-welcome-notice blockquote a,
+#welcome-screen a[href] {
   text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+html.light .curc-welcome-notice blockquote a,
+html.light #welcome-screen a[href] {
+  color: hsl(217.2 91.2% 45%);
+  font-weight: 500;
+}
+
+html.dark .curc-welcome-notice blockquote a,
+html.dark #welcome-screen a[href] {
+  color: hsl(var(--primary));
 }
 
 .curc-welcome-title {
@@ -77,6 +89,17 @@ button[aria-label="Edit feedback"] {
   padding: 0.1em 0.35em;
   border-radius: calc(var(--radius) - 2px);
   background: hsl(var(--muted) / 0.5);
+}
+
+.curc-header-model {
+  margin-left: 0.75rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: calc(var(--radius) - 2px);
+  background: hsl(var(--muted) / 0.5);
+  color: hsl(var(--foreground));
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 #welcome-screen [data-testid="starter"] button,

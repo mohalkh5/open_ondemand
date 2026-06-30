@@ -8,6 +8,7 @@ from ollama import AsyncClient
 
 from curc_chat.auth import get_current_user, get_or_create_auth_token, header_auth_callback
 from curc_chat.models import model_cache
+from curc_chat.models.ollama_models import format_active_model_notice
 from curc_chat.settings import (
     get_ollama_host,
     get_ollama_num_ctx,
@@ -72,6 +73,7 @@ async def chat_profiles():
             cl.ChatProfile(
                 name=model["name"],
                 markdown_description=_profile_description(model),
+                icon="/public/logo_dark.png",
             )
         )
     return profiles
@@ -102,10 +104,17 @@ def init_chat_session() -> None:
 
 @cl.on_chat_start
 async def on_chat_start():
+    if not model_cache.models:
+        await model_cache.refresh(client)
     init_chat_session()
     # Welcome disclaimer is injected on the empty-state screen in public/custom.js.
     if model_cache.load_error:
         await cl.Message(content=f"❌ **{model_cache.load_error}**").send()
+        return
+
+    models = model_cache.models or []
+    if len(models) == 1:
+        await cl.Message(content=format_active_model_notice(models[0])).send()
 
 
 @cl.on_chat_resume
@@ -402,10 +411,12 @@ async def on_message(message: cl.Message):
     if path_errors:
         error_text = "\n".join(f"- {err}" for err in path_errors)
         await cl.Message(
-            content=f"⚠️ **Could not attach file(s):**\n{error_text}"
+            content=(
+                "❌ **Could not attach file(s). Your message was not sent to the model.**\n\n"
+                f"{error_text}"
+            )
         ).send()
-        if not clean_text and not additional_context:
-            return
+        return
 
     if additional_context or images:
         attached = []

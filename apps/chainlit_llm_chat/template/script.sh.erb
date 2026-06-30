@@ -6,11 +6,26 @@ echo $port, $host
 module load uv
 source /curc/sw/uv_env/llm-chatbot-env/bin/activate
 
-if [[ "<%= context.model_path %>" == "CURC LLM Models" ]]
+model_path="<%= context.model_path %>"
+for _ in 1 2; do
+  case "${model_path}" in
+    \"*\"*)
+      model_path="${model_path#\"}"
+      model_path="${model_path%\"}"
+      ;;
+    \'*\')
+      model_path="${model_path#\'}"
+      model_path="${model_path%\'}"
+      ;;
+  esac
+done
+
+if [[ "${model_path}" == "CURC LLM Models" ]]
 then
   ml ollama
 else
-  export OLLAMA_MODELS=<%= context.model_path %>; ml ollama
+  export OLLAMA_MODELS="${model_path}"
+  ml ollama
 fi
 
 # Location of chat history (use projects instead of scratch)

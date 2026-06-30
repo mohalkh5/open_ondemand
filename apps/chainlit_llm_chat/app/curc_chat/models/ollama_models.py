@@ -1,15 +1,50 @@
 import logging
+import os
 from typing import List, Dict, Any, Optional, Tuple
 
 from ollama import AsyncClient
 
 logger = logging.getLogger(__name__)
 
-_MODEL_FETCH_ERROR = "Error fetching models."
+_CUSTOM_MODEL_PATHS_DOC = (
+    "https://curc.readthedocs.io/en/latest/open_ondemand/llm_chat_interface.html"
+)
+
+
+def _ollama_models_path() -> str:
+    return os.environ.get("OLLAMA_MODELS", "CURC LLM Models")
+
+
+def _model_path_help(path: str, detail: Optional[str] = None) -> str:
+    prefix = f"Error fetching models from {path}"
+    if detail:
+        prefix = f"{prefix}: {detail}"
+    return (
+        f"{prefix}. For more information on defining custom model paths, please see "
+        f"{_CUSTOM_MODEL_PATHS_DOC}"
+    )
+
+
+def _no_models_error(path: str) -> str:
+    return (
+        f"No models found in {path}. For more information on defining custom model paths, "
+        f"please see {_CUSTOM_MODEL_PATHS_DOC}"
+    )
+
+
+def format_active_model_notice(model: Dict[str, Any]) -> str:
+    """User-visible notice when only one Ollama model is available."""
+    name = model.get("name", "unknown")
+    return (
+        f"**Active model:** `{name}`\n\n"
+        "Only one model is available in this Ollama directory. "
+        "All replies use this model."
+    )
 
 
 async def get_available_models(client: AsyncClient) -> Tuple[List[Dict[str, Any]], Optional[str]]:
     """Return (models, error_message). error_message is set when listing fails or finds no models."""
+    model_path = _ollama_models_path()
     try:
         response = await client.list()
         models = []
@@ -41,14 +76,14 @@ async def get_available_models(client: AsyncClient) -> Tuple[List[Dict[str, Any]
                 )
 
         if not models:
-            logger.warning("No Ollama models found")
-            return [], _MODEL_FETCH_ERROR
+            logger.warning("No Ollama models found in %s", model_path)
+            return [], _no_models_error(model_path)
 
         return models, None
 
     except Exception as e:
-        logger.warning("Error fetching models from Ollama: %s", e)
-        return [], _MODEL_FETCH_ERROR
+        logger.warning("Error fetching models from %s: %s", model_path, e)
+        return [], _model_path_help(model_path, str(e))
 
 
 class ModelCache:
