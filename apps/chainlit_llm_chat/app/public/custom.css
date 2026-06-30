@@ -54,21 +54,32 @@ button[aria-label="Edit feedback"] {
   font-size: 0.85rem;
 }
 
-.curc-welcome-notice blockquote a,
-#welcome-screen a[href] {
-  text-decoration: underline;
+/* Light theme: blue underlined links (chainlit_en-US.md readme, welcome notice) */
+html.light #welcome-screen a[href],
+html.light #welcome-screen .prose a,
+html.light #welcome-screen .markdown a,
+html.light #welcome-screen p a,
+html.light .curc-welcome-notice a[href] {
+  color: #2563eb !important;
+  text-decoration: underline !important;
   text-underline-offset: 2px;
-}
-
-html.light .curc-welcome-notice blockquote a,
-html.light #welcome-screen a[href] {
-  color: hsl(217.2 91.2% 45%);
   font-weight: 500;
 }
 
-html.dark .curc-welcome-notice blockquote a,
-html.dark #welcome-screen a[href] {
+html.light #welcome-screen a[href]:hover,
+html.light #welcome-screen .prose a:hover,
+html.light #welcome-screen .markdown a:hover,
+html.light .curc-welcome-notice a[href]:hover {
+  color: #1d4ed8 !important;
+}
+
+html.dark #welcome-screen a[href],
+html.dark #welcome-screen .prose a,
+html.dark #welcome-screen .markdown a,
+html.dark .curc-welcome-notice blockquote a {
   color: hsl(var(--primary));
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .curc-welcome-title {
