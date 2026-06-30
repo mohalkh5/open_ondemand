@@ -6,7 +6,13 @@ This repository packages a Chainlit chat UI that talks to **Ollama**, persists c
 
 Open OnDemand stages only the job scripts under `template/` into each session's output directory (the same pattern as Jupyter, VS Code Server, and RStudio). The Chainlit application source lives in `app/` at the repo root and is **not** staged per session.
 
-At job start, `template/script.sh.erb` activates the shared Python environment at `/curc/sw/uv_env/llm-chatbot-env/` and runs Chainlit from this app's `app/` directory. OOD writes that path into the job script at launch (it is not copied into the session output directory).
+At job start, `template/script.sh.erb` activates the shared Python environment at `/curc/sw/uv_env/llm-chatbot-env/` and runs Chainlit from this app's `app/` directory. OOD resolves that path from the same symlink used by every other CURC app:
+
+```text
+/var/www/ood/apps/sys/chainlit_llm_chat -> /curc/admin/ood/development/apps/chainlit_llm_chat
+```
+
+Only the job scripts under `template/` are staged per session; `app/` is not copied into user output directories.
 
 Chat history is stored under `/projects/${USER}/.chainlit_data`.
 
