@@ -84,24 +84,6 @@ html.dark #welcome-screen a[href] {
   color: hsl(var(--muted-foreground));
 }
 
-.curc-welcome-model {
-  font-size: 0.85em;
-  padding: 0.1em 0.35em;
-  border-radius: calc(var(--radius) - 2px);
-  background: hsl(var(--muted) / 0.5);
-}
-
-.curc-header-model {
-  margin-left: 0.75rem;
-  padding: 0.2rem 0.55rem;
-  border-radius: calc(var(--radius) - 2px);
-  background: hsl(var(--muted) / 0.5);
-  color: hsl(var(--foreground));
-  font-size: 0.8125rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
 #welcome-screen [data-testid="starter"] button,
 #welcome-screen button[class*="starter"] {
   text-align: left;

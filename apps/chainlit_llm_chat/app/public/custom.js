@@ -155,69 +155,8 @@
     hideFeedbackControls();
   }
 
-  var cachedChatProfiles = null;
-
-  function appBasePath() {
-    return window.location.pathname.replace(/\/?$/, "");
-  }
-
-  function fetchChatProfiles(cb) {
-    if (cachedChatProfiles) {
-      cb(cachedChatProfiles);
-      return;
-    }
-    fetch(appBasePath() + "/project/settings", { credentials: "same-origin" })
-      .then(function (res) {
-        return res.ok ? res.json() : null;
-      })
-      .then(function (data) {
-        cachedChatProfiles = (data && data.chatProfiles) || [];
-        cb(cachedChatProfiles);
-      })
-      .catch(function () {
-        cb([]);
-      });
-  }
-
-  function resolveActiveModelLabel(cb) {
-    var trigger = document.getElementById("chat-profiles");
-    if (trigger) {
-      var text = (trigger.textContent || "").trim();
-      if (text && text !== "Select profile") {
-        cb(text);
-        return;
-      }
-    }
-    fetchChatProfiles(function (profiles) {
-      if (profiles.length === 1) {
-        var profile = profiles[0];
-        cb(profile.display_name || profile.name || "");
-        return;
-      }
-      cb("");
-    });
-  }
-
-  function injectHeaderModelBadge(modelLabel) {
-    if (!modelLabel) {
-      return;
-    }
-    var header = document.querySelector("header");
-    if (!header) {
-      return;
-    }
-    var badge = document.getElementById("curc-header-model");
-    if (!badge) {
-      badge = document.createElement("span");
-      badge.id = "curc-header-model";
-      badge.className = "curc-header-model";
-      header.appendChild(badge);
-    }
-    badge.textContent = "Model: " + modelLabel;
-  }
-
-  /** Canonical CURC welcome disclaimer (empty-state screen only; see chainlit_handlers.on_chat_start). */
-  function injectWelcomeNotice(modelLabel) {
+  /** Canonical CURC welcome disclaimer (empty-state screen only). */
+  function injectWelcomeNotice() {
     var screen = document.getElementById("welcome-screen");
     if (!screen || screen.querySelector("#curc-welcome-notice")) {
       return;
@@ -231,13 +170,7 @@
     notice.id = "curc-welcome-notice";
     notice.className = "curc-welcome-notice";
     notice.innerHTML =
-      '<p class="curc-welcome-title"><strong>CURC LLM Chat Interface</strong>' +
-      (modelLabel
-        ? ' — model: <code class="curc-welcome-model">' +
-          modelLabel +
-          "</code>"
-        : "") +
-      "</p>" +
+      '<p class="curc-welcome-title"><strong>CURC LLM Chat Interface</strong></p>' +
       '<blockquote><strong>Please note:</strong> This assistant was <strong>not</strong> trained on ' +
       '<a href="https://curc.readthedocs.io" target="_blank" rel="noopener noreferrer">' +
       "CU Research Computing (CURC) documentation</a>. " +
@@ -292,10 +225,7 @@
   function refreshCurcUi() {
     hideCurcDisabledControls();
     patchWelcomeLogo();
-    resolveActiveModelLabel(function (modelLabel) {
-      injectHeaderModelBadge(modelLabel);
-      injectWelcomeNotice(modelLabel);
-    });
+    injectWelcomeNotice();
   }
 
   refreshCurcUi();

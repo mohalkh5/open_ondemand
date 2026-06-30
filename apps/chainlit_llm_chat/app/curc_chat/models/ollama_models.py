@@ -32,16 +32,6 @@ def _no_models_error(path: str) -> str:
     )
 
 
-def format_active_model_notice(model: Dict[str, Any]) -> str:
-    """User-visible notice when only one Ollama model is available."""
-    name = model.get("name", "unknown")
-    return (
-        f"**Active model:** `{name}`\n\n"
-        "Only one model is available in this Ollama directory. "
-        "All replies use this model."
-    )
-
-
 async def get_available_models(client: AsyncClient) -> Tuple[List[Dict[str, Any]], Optional[str]]:
     """Return (models, error_message). error_message is set when listing fails or finds no models."""
     model_path = _ollama_models_path()

@@ -8,7 +8,6 @@ from ollama import AsyncClient
 
 from curc_chat.auth import get_current_user, get_or_create_auth_token, header_auth_callback
 from curc_chat.models import model_cache
-from curc_chat.models.ollama_models import format_active_model_notice
 from curc_chat.settings import (
     get_ollama_host,
     get_ollama_num_ctx,
@@ -73,7 +72,6 @@ async def chat_profiles():
             cl.ChatProfile(
                 name=model["name"],
                 markdown_description=_profile_description(model),
-                icon="/public/logo_dark.png",
             )
         )
     return profiles
@@ -110,11 +108,6 @@ async def on_chat_start():
     # Welcome disclaimer is injected on the empty-state screen in public/custom.js.
     if model_cache.load_error:
         await cl.Message(content=f"❌ **{model_cache.load_error}**").send()
-        return
-
-    models = model_cache.models or []
-    if len(models) == 1:
-        await cl.Message(content=format_active_model_notice(models[0])).send()
 
 
 @cl.on_chat_resume
