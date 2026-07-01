@@ -54,12 +54,16 @@ button[aria-label="Edit feedback"] {
   font-size: 0.85rem;
 }
 
-/* Light theme: blue underlined links (chainlit_en-US.md readme, welcome notice) */
+/* Light theme: blue underlined links (welcome screen + Documentation panel / chainlit_en-US.md) */
 html.light #welcome-screen a[href],
 html.light #welcome-screen .prose a,
 html.light #welcome-screen .markdown a,
 html.light #welcome-screen p a,
-html.light .curc-welcome-notice a[href] {
+html.light .curc-welcome-notice a[href],
+html.light [role="dialog"] a[href],
+html.light [role="dialog"] .prose a,
+html.light [role="dialog"] .markdown a,
+html.light [role="dialog"] p a {
   color: #2563eb !important;
   text-decoration: underline !important;
   text-underline-offset: 2px;
@@ -69,14 +73,20 @@ html.light .curc-welcome-notice a[href] {
 html.light #welcome-screen a[href]:hover,
 html.light #welcome-screen .prose a:hover,
 html.light #welcome-screen .markdown a:hover,
-html.light .curc-welcome-notice a[href]:hover {
+html.light .curc-welcome-notice a[href]:hover,
+html.light [role="dialog"] a[href]:hover,
+html.light [role="dialog"] .prose a:hover,
+html.light [role="dialog"] .markdown a:hover {
   color: #1d4ed8 !important;
 }
 
 html.dark #welcome-screen a[href],
 html.dark #welcome-screen .prose a,
 html.dark #welcome-screen .markdown a,
-html.dark .curc-welcome-notice blockquote a {
+html.dark .curc-welcome-notice blockquote a,
+html.dark [role="dialog"] a[href],
+html.dark [role="dialog"] .prose a,
+html.dark [role="dialog"] .markdown a {
   color: hsl(var(--primary));
   text-decoration: underline;
   text-underline-offset: 2px;
