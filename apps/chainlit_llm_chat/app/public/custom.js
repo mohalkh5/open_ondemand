@@ -155,10 +155,63 @@
     hideFeedbackControls();
   }
 
+  var cachedChatProfiles = null;
+
+  function appBasePath() {
+    return window.location.pathname.replace(/\/?$/, "");
+  }
+
+  function escapeHtml(text) {
+    var div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function fetchChatProfiles(cb) {
+    if (cachedChatProfiles) {
+      cb(cachedChatProfiles);
+      return;
+    }
+    fetch(appBasePath() + "/project/settings", { credentials: "same-origin" })
+      .then(function (res) {
+        return res.ok ? res.json() : null;
+      })
+      .then(function (data) {
+        cachedChatProfiles = (data && data.chatProfiles) || [];
+        cb(cachedChatProfiles);
+      })
+      .catch(function () {
+        cb([]);
+      });
+  }
+
+  function updateActiveModelHint(notice, modelName) {
+    var hint = notice.querySelector("#curc-active-model-hint");
+    if (!modelName) {
+      if (hint) {
+        hint.remove();
+      }
+      return;
+    }
+    if (!hint) {
+      hint = document.createElement("p");
+      hint.id = "curc-active-model-hint";
+      hint.className = "curc-active-model-hint";
+      notice.appendChild(hint);
+    }
+    hint.innerHTML =
+      "Active Ollama model: <code>" + escapeHtml(modelName) + "</code>";
+  }
+
   /** Canonical CURC welcome disclaimer (empty-state screen only). */
-  function injectWelcomeNotice() {
+  function ensureWelcomeNotice(modelName) {
     var screen = document.getElementById("welcome-screen");
-    if (!screen || screen.querySelector("#curc-welcome-notice")) {
+    if (!screen) {
+      return;
+    }
+    var existing = screen.querySelector("#curc-welcome-notice");
+    if (existing) {
+      updateActiveModelHint(existing, modelName);
       return;
     }
     var textarea = screen.querySelector("textarea");
@@ -177,6 +230,10 @@
       "For this reason, information about CURC-specific clusters, software modules, " +
       "queues, filesystems, policies, or procedures, may be <strong>incorrect</strong>. " +
       "Always verify important details in the official documentation or with CURC support.</blockquote>";
+
+    if (modelName) {
+      updateActiveModelHint(notice, modelName);
+    }
 
     var composerRoot = textarea;
     while (composerRoot && composerRoot.parentElement !== screen) {
@@ -225,7 +282,13 @@
   function refreshCurcUi() {
     hideCurcDisabledControls();
     patchWelcomeLogo();
-    injectWelcomeNotice();
+    fetchChatProfiles(function (profiles) {
+      var modelName = "";
+      if (profiles.length === 1) {
+        modelName = profiles[0].display_name || profiles[0].name || "";
+      }
+      ensureWelcomeNotice(modelName);
+    });
   }
 
   refreshCurcUi();

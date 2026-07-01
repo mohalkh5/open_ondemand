@@ -32,6 +32,15 @@ def _no_models_error(path: str) -> str:
     )
 
 
+def single_available_model_name(
+    models: Optional[List[Dict[str, Any]]],
+) -> Optional[str]:
+    """Return the model name when exactly one completion model is available."""
+    if models and len(models) == 1:
+        return models[0].get("name")
+    return None
+
+
 async def get_available_models(client: AsyncClient) -> Tuple[List[Dict[str, Any]], Optional[str]]:
     """Return (models, error_message). error_message is set when listing fails or finds no models."""
     model_path = _ollama_models_path()

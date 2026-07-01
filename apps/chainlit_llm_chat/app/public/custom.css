@@ -99,6 +99,21 @@ html.dark [role="dialog"] .markdown a {
   margin: 0;
 }
 
+.curc-active-model-hint {
+  text-align: center;
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.curc-active-model-hint code {
+  font-size: 0.9em;
+  padding: 0.1em 0.35em;
+  border-radius: calc(var(--radius) - 2px);
+  background: hsl(var(--muted) / 0.5);
+  color: hsl(var(--foreground));
+}
+
 .curc-welcome-hint {
   margin: 0.65rem 0 0;
   font-size: 0.8125rem;

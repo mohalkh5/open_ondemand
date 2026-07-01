@@ -8,6 +8,7 @@ from ollama import AsyncClient
 
 from curc_chat.auth import get_current_user, get_or_create_auth_token, header_auth_callback
 from curc_chat.models import model_cache
+from curc_chat.models.ollama_models import single_available_model_name
 from curc_chat.settings import (
     get_ollama_host,
     get_ollama_num_ctx,
@@ -100,6 +101,24 @@ def init_chat_session() -> None:
     cl.user_session.set("thread_created", False)
 
 
+async def _send_single_model_settings() -> None:
+    """Expose the active model in chat settings when the profile dropdown is hidden."""
+    model_name = single_available_model_name(model_cache.models)
+    if not model_name or model_cache.load_error:
+        return
+
+    await cl.ChatSettings(
+        [
+            cl.input_widget.Select(
+                id="ollama_model",
+                label="Active Ollama model",
+                values=[model_name],
+                initial_index=0,
+            )
+        ]
+    ).send()
+
+
 @cl.on_chat_start
 async def on_chat_start():
     if not model_cache.models:
@@ -108,6 +127,9 @@ async def on_chat_start():
     # Welcome disclaimer is injected on the empty-state screen in public/custom.js.
     if model_cache.load_error:
         await cl.Message(content=f"❌ **{model_cache.load_error}**").send()
+        return
+
+    await _send_single_model_settings()
 
 
 @cl.on_chat_resume
@@ -139,6 +161,9 @@ async def on_chat_resume(thread: dict):
 
     if model_cache.load_error:
         await cl.Message(content=f"❌ **{model_cache.load_error}**").send()
+        return
+
+    await _send_single_model_settings()
 
 
 async def send_animated_message(
