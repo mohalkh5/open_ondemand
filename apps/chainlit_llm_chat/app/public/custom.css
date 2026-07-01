@@ -11,12 +11,16 @@ input[type="file"] {
   pointer-events: none !important;
 }
 
-/* Human feedback (thumbs) — UI hidden; chat persistence unchanged */
+/* Human feedback (thumbs) — CSS fallback; primary disable is disable_human_feedback on messages */
 button[aria-label="Helpful"],
 button[aria-label="Not helpful"],
-button[aria-label="Edit feedback"] {
+button[aria-label="Edit feedback"],
+button[aria-label*="helpful" i],
+button[aria-label*="feedback" i],
+[data-testid*="feedback" i] {
   display: none !important;
   pointer-events: none !important;
+  visibility: hidden !important;
 }
 
 /* Welcome screen — logo, notice, composer, starters */

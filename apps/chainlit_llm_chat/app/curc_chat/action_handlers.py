@@ -4,7 +4,7 @@ import json
 
 import chainlit as cl
 
-from curc_chat.chainlit_handlers import handle_user_turn
+from curc_chat.chainlit_handlers import curc_message, handle_user_turn
 from curc_chat.message_actions import (
     ACTION_COPY_CODE,
     ACTION_NEW_CHAT,
@@ -20,14 +20,14 @@ from curc_chat.models import model_cache
 async def _regenerate_last_reply() -> None:
     message_history = cl.user_session.get("message_history", [])
     if not message_history or message_history[-1].get("role") != "assistant":
-        await cl.Message(content="No assistant reply to regenerate.").send()
+        await curc_message(content="No assistant reply to regenerate.").send()
         return
 
     message_history.pop()
     cl.user_session.set("message_history", message_history)
 
     if not message_history or message_history[-1].get("role") != "user":
-        await cl.Message(content="Could not find the previous user message.").send()
+        await curc_message(content="Could not find the previous user message.").send()
         return
 
     last_user = message_history[-1]
@@ -56,7 +56,7 @@ async def on_copy_code_block(action: cl.Action):
         code = blocks[0] if blocks else None
 
     if not code:
-        await cl.Message(content="No code block found in that message.").send()
+        await curc_message(content="No code block found in that message.").send()
         await action.remove()
         return
 
@@ -64,7 +64,7 @@ async def on_copy_code_block(action: cl.Action):
     await cl.send_window_message(
         json.dumps({"type": "curc_copy_code", "code": code}),
     )
-    await cl.Message(
+    await curc_message(
         content=(
             "**Code block** (also sent to your clipboard when supported):\n\n"
             f"```\n{code}\n```"
@@ -79,7 +79,7 @@ async def on_switch_vision_model(action: cl.Action):
     vision_model = payload.get("model") or find_vision_model_name()
 
     if not vision_model:
-        await cl.Message(
+        await curc_message(
             content="No vision-capable model is available on this Ollama server."
         ).send()
         await action.remove()
@@ -89,7 +89,7 @@ async def on_switch_vision_model(action: cl.Action):
     cl.user_session.set("model", vision_model)
     cl.user_session.set("model_info", model_info)
 
-    await cl.Message(
+    await curc_message(
         content=(
             f"Switched to **{vision_model}**. "
             "Send a message with an image attachment, or use **Regenerate** "

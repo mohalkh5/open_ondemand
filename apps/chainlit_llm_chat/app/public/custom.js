@@ -136,17 +136,23 @@
 
   /** Hide human feedback buttons (thumbs up/down on assistant messages). */
   function hideFeedbackControls() {
-    var selectors = [
-      'button[aria-label="Helpful"]',
-      'button[aria-label="Not helpful"]',
-      'button[aria-label="Edit feedback"]',
-    ];
-    selectors.forEach(function (sel) {
-      document.querySelectorAll(sel).forEach(function (el) {
-        el.style.display = "none";
-        el.setAttribute("disabled", "true");
-        el.setAttribute("aria-hidden", "true");
-      });
+    document.querySelectorAll("button").forEach(function (btn) {
+      var label = (
+        btn.getAttribute("aria-label") ||
+        btn.getAttribute("title") ||
+        ""
+      ).toLowerCase();
+      if (label.indexOf("helpful") !== -1 || label.indexOf("feedback") !== -1) {
+        btn.style.display = "none";
+        btn.style.visibility = "hidden";
+        btn.setAttribute("hidden", "true");
+        btn.disabled = true;
+        btn.setAttribute("aria-hidden", "true");
+      }
+    });
+    document.querySelectorAll('[data-testid*="feedback" i]').forEach(function (el) {
+      el.style.display = "none";
+      el.style.visibility = "hidden";
     });
   }
 

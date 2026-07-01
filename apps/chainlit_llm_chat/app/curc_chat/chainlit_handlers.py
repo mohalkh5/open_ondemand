@@ -28,6 +28,12 @@ if not os.getenv("CHAINLIT_AUTH_SECRET"):
 client = AsyncClient(host=f"http://{get_ollama_host()}")
 
 
+def curc_message(content: str = "", **kwargs) -> cl.Message:
+    """Chainlit message with thumbs feedback disabled (no config.toml toggle in Chainlit)."""
+    kwargs.setdefault("disable_human_feedback", True)
+    return cl.Message(content=content, **kwargs)
+
+
 def load_system_prompt() -> str:
     prompt_path = get_system_prompt_path()
     if prompt_path.exists():
@@ -126,7 +132,7 @@ async def on_chat_start():
     init_chat_session()
     # Welcome disclaimer is injected on the empty-state screen in public/custom.js.
     if model_cache.load_error:
-        await cl.Message(content=f"❌ **{model_cache.load_error}**").send()
+        await curc_message(content=f"❌ **{model_cache.load_error}**").send()
         return
 
     await _send_single_model_settings()
@@ -160,7 +166,7 @@ async def on_chat_resume(thread: dict):
     )
 
     if model_cache.load_error:
-        await cl.Message(content=f"❌ **{model_cache.load_error}**").send()
+        await curc_message(content=f"❌ **{model_cache.load_error}**").send()
         return
 
     await _send_single_model_settings()
@@ -265,12 +271,12 @@ async def handle_user_turn(
 ) -> None:
     """Run one chat turn against Ollama."""
     if model_cache.load_error:
-        await cl.Message(content=f"❌ **{model_cache.load_error}**").send()
+        await curc_message(content=f"❌ **{model_cache.load_error}**").send()
         return
 
     model = cl.user_session.get("model")
     if not model:
-        await cl.Message(
+        await curc_message(
             content="❌ **Error fetching models.**"
         ).send()
         return
@@ -304,7 +310,7 @@ async def handle_user_turn(
         approx_chars,
     )
 
-    response_message = cl.Message(content="")
+    response_message = curc_message(content="")
     await response_message.send()
 
     animation_task = asyncio.create_task(
@@ -400,12 +406,12 @@ async def handle_user_turn(
 @cl.on_message
 async def on_message(message: cl.Message):
     if model_cache.load_error:
-        await cl.Message(content=f"❌ **{model_cache.load_error}**").send()
+        await curc_message(content=f"❌ **{model_cache.load_error}**").send()
         return
 
     model = cl.user_session.get("model")
     if not model:
-        await cl.Message(
+        await curc_message(
             content="❌ **Error fetching models.**"
         ).send()
         return
@@ -413,7 +419,7 @@ async def on_message(message: cl.Message):
     model_info = cl.user_session.get("model_info", {})
 
     if message.elements:
-        await cl.Message(
+        await curc_message(
             content=(
                 "⚠️ **Browser upload is disabled** and was ignored.\n\n"
                 "Attach files with an Alpine **file** path, for example:\n\n"
@@ -428,7 +434,7 @@ async def on_message(message: cl.Message):
 
     if path_errors:
         error_text = "\n".join(f"- {err}" for err in path_errors)
-        await cl.Message(
+        await curc_message(
             content=(
                 "❌ **Could not attach file(s). Your message was not sent to the model.**\n\n"
                 f"{error_text}"
@@ -442,12 +448,12 @@ async def on_message(message: cl.Message):
             attached.append(f"{len(images)} image(s)")
         if additional_context:
             attached.append("text/PDF content")
-        await cl.Message(
+        await curc_message(
             content=f"📎 **File attached from Alpine filesystem:** {', '.join(attached)}"
         ).send()
 
     if additional_context and PDF_EMPTY_MARKER in additional_context:
-        await cl.Message(
+        await curc_message(
             content=f"⚠️ **Could not read PDF text.**\n{additional_context.strip()}"
         ).send()
         if not clean_text.strip():
@@ -456,7 +462,7 @@ async def on_message(message: cl.Message):
     await _ensure_thread_created(clean_text or message.content, model)
 
     if images and "vision" not in model_info.get("capabilities"):
-        await cl.Message(
+        await curc_message(
             content=(
                 f"⚠️ **{model}** doesn't support vision. "
                 f"Please switch to a vision-capable model using the model selector."
@@ -481,7 +487,7 @@ async def on_message(message: cl.Message):
         vision_images = images
 
     if not api_user_content.strip() and not vision_images:
-        await cl.Message(
+        await curc_message(
             content="Please enter a message or valid Alpine file path(s)."
         ).send()
         return
