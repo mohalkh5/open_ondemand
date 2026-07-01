@@ -1,12 +1,12 @@
 <%-
 
   # Initialize an empty array to hold Slurm arguments
-  base_slurm_args = ["--nodes=1", "--partition=atesting_a100", "--qos=testing"]
+  base_slurm_args = ["--nodes=1", "--partition=aa100", "--qos=gpu-testing"]
 
   if config_type == "presets"
     case preset_configuration
       when "10x1x1alpine"
-        base_slurm_args += ["--ntasks=10", "--time=1:00:00", "--gres=gpu:1"]
+        base_slurm_args += ["--ntasks=10", "--time=1:00:00", "--gres=gpu:a100_3g.20gb:1"]
       else
         base_slurm_args
     end
