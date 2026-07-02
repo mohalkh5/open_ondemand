@@ -173,13 +173,6 @@
     document.querySelectorAll("button").forEach(function (btn) {
       if (isFeedbackButton(btn)) {
         hideElement(btn);
-        var row = btn.closest(".flex.items-center");
-        if (
-          row &&
-          row.querySelector("button.positive-feedback-on, button.positive-feedback-off, button.negative-feedback-on, button.negative-feedback-off")
-        ) {
-          hideElement(row);
-        }
       }
     });
     document.querySelectorAll('[data-testid*="feedback" i]').forEach(hideElement);

@@ -11,15 +11,21 @@ input[type="file"] {
   pointer-events: none !important;
 }
 
-/* Human feedback (thumbs) — Chainlit uses positive/negative-feedback-* classes on icon buttons */
+/* Human feedback (thumbs) — only the thumb icon buttons, not the shared action bar */
 button.positive-feedback-on,
 button.positive-feedback-off,
 button.negative-feedback-on,
-button.negative-feedback-off,
-.flex.items-center:has(button.positive-feedback-on),
-.flex.items-center:has(button.positive-feedback-off),
-.flex.items-center:has(button.negative-feedback-on),
-.flex.items-center:has(button.negative-feedback-off) {
+button.negative-feedback-off {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Inner feedback-only row (no flex-wrap); do NOT use :has() on flex-wrap parents — that hides Regenerate/New chat too */
+.flex.items-center:not(.flex-wrap):has(button.positive-feedback-on),
+.flex.items-center:not(.flex-wrap):has(button.positive-feedback-off),
+.flex.items-center:not(.flex-wrap):has(button.negative-feedback-on),
+.flex.items-center:not(.flex-wrap):has(button.negative-feedback-off) {
   display: none !important;
   visibility: hidden !important;
   pointer-events: none !important;
