@@ -29,8 +29,8 @@ client = AsyncClient(host=f"http://{get_ollama_host()}")
 
 
 def curc_message(content: str = "", **kwargs) -> cl.Message:
-    """Chainlit message with thumbs feedback disabled (no config.toml toggle in Chainlit)."""
-    kwargs.setdefault("disable_human_feedback", True)
+    """Create a Chainlit message. Feedback buttons are hidden via public/custom.css and custom.js."""
+    kwargs.pop("disable_human_feedback", None)
     return cl.Message(content=content, **kwargs)
 
 

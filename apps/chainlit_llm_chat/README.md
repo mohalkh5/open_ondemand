@@ -111,7 +111,7 @@ or a single absolute path on its own line. Supported types include text, code, P
 
 ### UI customization
 
-- **Feedback buttons** (thumbs up/down) are disabled via `disable_human_feedback=True` on all messages (`curc_message()` helper). CSS/JS in `public/` is a fallback.
+- **Feedback buttons** (thumbs up/down) are hidden via CSS/JS in `public/` (installed Chainlit does not support per-message `disable_human_feedback`).
 - **Attach button** is hidden in CSS/JS because attachments use HPC paths only.
 - **Welcome disclaimer** is injected by `public/custom.js` on the empty-state screen.
 

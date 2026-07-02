@@ -11,7 +11,7 @@ input[type="file"] {
   pointer-events: none !important;
 }
 
-/* Human feedback (thumbs) — CSS fallback; primary disable is disable_human_feedback on messages */
+/* Human feedback (thumbs) — hidden in CSS; custom.js also hides dynamic feedback controls */
 button[aria-label="Helpful"],
 button[aria-label="Not helpful"],
 button[aria-label="Edit feedback"],
