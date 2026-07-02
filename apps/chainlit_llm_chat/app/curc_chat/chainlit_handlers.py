@@ -136,6 +136,9 @@ async def on_chat_start():
         return
 
     await _send_single_model_settings()
+    single = single_available_model_name(model_cache.models)
+    if single:
+        logger.info("Chat started with single model profile: %s", single)
 
 
 @cl.on_chat_resume

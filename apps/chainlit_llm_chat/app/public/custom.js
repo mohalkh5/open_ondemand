@@ -135,12 +135,13 @@
   }
 
   function hideElement(el) {
-    if (!el) return;
+    if (!el || el.getAttribute("data-curc-hidden") === "1") return;
     el.style.setProperty("display", "none", "important");
     el.style.setProperty("visibility", "hidden", "important");
     el.style.setProperty("pointer-events", "none", "important");
     el.setAttribute("hidden", "true");
     el.setAttribute("aria-hidden", "true");
+    el.setAttribute("data-curc-hidden", "1");
   }
 
   function isFeedbackButton(btn) {
@@ -184,6 +185,11 @@
   }
 
   var cachedChatProfiles = null;
+  var welcomeNoticeInstalled = false;
+  var lastModelHint = "";
+  var uiPatchInProgress = false;
+  var refreshScheduled = false;
+  var uiObserver = null;
 
   function appBasePath() {
     return window.location.pathname.replace(/\/?$/, "");
@@ -214,19 +220,30 @@
   }
 
   function updateActiveModelHint(notice, modelName) {
-    var hint = notice.querySelector("#curc-active-model-hint");
     if (!modelName) {
-      if (hint) {
-        hint.remove();
+      lastModelHint = "";
+      var stale = notice.querySelector("#curc-active-model-hint");
+      if (stale) {
+        stale.remove();
       }
       return;
     }
+    if (modelName === lastModelHint) {
+      return;
+    }
+    lastModelHint = modelName;
+
+    var hint = notice.querySelector("#curc-active-model-hint");
     if (!hint) {
       hint = document.createElement("p");
       hint.id = "curc-active-model-hint";
       hint.className = "curc-active-model-hint";
       notice.appendChild(hint);
     }
+    if (hint.getAttribute("data-curc-model") === modelName) {
+      return;
+    }
+    hint.setAttribute("data-curc-model", modelName);
     hint.innerHTML =
       "Active Ollama model: <code>" + escapeHtml(modelName) + "</code>";
   }
@@ -240,6 +257,9 @@
     var existing = screen.querySelector("#curc-welcome-notice");
     if (existing) {
       updateActiveModelHint(existing, modelName);
+      return;
+    }
+    if (welcomeNoticeInstalled) {
       return;
     }
     var textarea = screen.querySelector("textarea");
@@ -272,6 +292,7 @@
     } else {
       screen.insertBefore(notice, textarea);
     }
+    welcomeNoticeInstalled = true;
   }
 
   function isDarkTheme() {
@@ -307,24 +328,58 @@
     img.classList.add("curc-welcome-logo");
   }
 
+  function pauseUiObserver() {
+    if (uiObserver) {
+      uiObserver.disconnect();
+    }
+  }
+
+  function resumeUiObserver() {
+    if (!uiObserver) {
+      return;
+    }
+    uiObserver.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+  }
+
   function refreshCurcUi() {
-    hideCurcDisabledControls();
-    patchWelcomeLogo();
-    fetchChatProfiles(function (profiles) {
-      var modelName = "";
-      if (profiles.length === 1) {
-        modelName = profiles[0].display_name || profiles[0].name || "";
-      }
-      ensureWelcomeNotice(modelName);
+    if (uiPatchInProgress) {
+      return;
+    }
+    uiPatchInProgress = true;
+    pauseUiObserver();
+    try {
+      hideCurcDisabledControls();
+      patchWelcomeLogo();
+      fetchChatProfiles(function (profiles) {
+        var modelName = "";
+        if (profiles.length === 1) {
+          modelName = profiles[0].display_name || profiles[0].name || "";
+        }
+        ensureWelcomeNotice(modelName);
+      });
+    } finally {
+      uiPatchInProgress = false;
+      resumeUiObserver();
+    }
+  }
+
+  function scheduleRefreshCurcUi() {
+    if (refreshScheduled) {
+      return;
+    }
+    refreshScheduled = true;
+    window.requestAnimationFrame(function () {
+      refreshScheduled = false;
+      refreshCurcUi();
     });
   }
 
   refreshCurcUi();
-  var uiObserver = new MutationObserver(refreshCurcUi);
-  uiObserver.observe(document.documentElement, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: ["class"],
-  });
+  uiObserver = new MutationObserver(scheduleRefreshCurcUi);
+  resumeUiObserver();
 })();

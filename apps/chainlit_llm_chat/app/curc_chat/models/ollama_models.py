@@ -78,6 +78,13 @@ async def get_available_models(client: AsyncClient) -> Tuple[List[Dict[str, Any]
             logger.warning("No Ollama models found in %s", model_path)
             return [], _no_models_error(model_path)
 
+        if len(models) == 1:
+            logger.info(
+                "Single completion model in %s: %s",
+                model_path,
+                models[0].get("name"),
+            )
+
         return models, None
 
     except Exception as e:
