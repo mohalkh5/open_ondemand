@@ -2,6 +2,8 @@
 Resolve and validate Alpine/CURC filesystem paths for chat attachments.
 
 Users attach files by pasting absolute paths in messages (no browser upload).
+Paths may live in any CURC filesystem location the user can read (including
+files shared by other users under /projects/, /scratch/, etc.).
 """
 
 import logging
@@ -29,27 +31,31 @@ def get_username() -> str:
     return os.getenv("USER") or os.getenv("USERNAME") or "unknown"
 
 
-def get_allowed_roots(username: str) -> List[Path]:
-    """CURC filesystem roots permitted for attachments."""
-    return [
-        Path(f"/home/{username}"),
-        Path(f"/projects/{username}"),
-        Path(f"/scratch/alpine/{username}"),
-        Path("/pl/active"),
-    ]
+def _is_on_curc_filesystem(path: Path) -> bool:
+    """True when *path* is on a known CURC Alpine filesystem mount."""
+    resolved = str(path.resolve())
+    return any(
+        resolved == prefix.rstrip("/") or resolved.startswith(prefix)
+        for prefix in _HPC_PATH_PREFIXES
+    )
 
 
-def _is_under_root(path: Path, root: Path) -> bool:
+def _assert_readable_file(resolved: Path, display_path: str) -> None:
+    """Raise ValueError when the job process cannot read *resolved*."""
     try:
-        path.relative_to(root.resolve())
-        return True
-    except ValueError:
-        return False
+        with open(resolved, "rb"):
+            pass
+    except PermissionError:
+        raise ValueError(
+            f"Your user does not have read permissions for {display_path}."
+        ) from None
+    except OSError as exc:
+        raise ValueError(f"Cannot read {display_path}: {exc}") from exc
+
 
 def validate_hpc_path(raw_path: str, username: Optional[str] = None) -> Path:
-    """Resolve *raw_path* and ensure it is a readable file under allowed CURC roots."""
+    """Resolve *raw_path* and ensure it is a readable file on CURC filesystems."""
     username = username or get_username()
-    allowed_roots = get_allowed_roots(username)
 
     expanded = os.path.expanduser(raw_path.strip())
     expanded = expanded.replace("${USER}", username).replace("$USER", username)
@@ -62,10 +68,10 @@ def validate_hpc_path(raw_path: str, username: Optional[str] = None) -> Path:
 
     resolved = path.resolve()
 
-    if not any(_is_under_root(resolved, root) for root in allowed_roots):
-        allowed_display = ", ".join(str(r) for r in allowed_roots)
+    if not _is_on_curc_filesystem(resolved):
+        roots_display = ", ".join(_HPC_PATH_PREFIXES)
         raise ValueError(
-            f"Path is outside allowed CURC filesystem roots ({allowed_display}): {raw_path}"
+            f"Path must be on a CURC filesystem ({roots_display}): {raw_path}"
         )
 
     if not resolved.exists():
@@ -79,6 +85,8 @@ def validate_hpc_path(raw_path: str, username: Optional[str] = None) -> Path:
 
     if not resolved.is_file():
         raise ValueError(f"Not a readable file: {raw_path}")
+
+    _assert_readable_file(resolved, raw_path)
 
     size = resolved.stat().st_size
     max_bytes = get_max_attach_size_bytes()
@@ -100,8 +108,8 @@ def extract_paths_from_message(content: str) -> Tuple[str, List[str]]:
     Pull HPC file paths from a message and return (remaining_text, raw_path_strings).
 
     Supported forms:
-      - ``/file /projects/user/a.pdf /projects/user/b.py``
-      - One absolute path per line (under allowed CURC prefixes)
+      - ``/file /projects/user/a.pdf /projects/otheruser/b.py``
+      - One absolute path per line (under CURC filesystem prefixes)
     """
     if not content:
         return "", []
