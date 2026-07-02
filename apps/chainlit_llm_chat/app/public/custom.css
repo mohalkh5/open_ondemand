@@ -11,12 +11,33 @@ input[type="file"] {
   pointer-events: none !important;
 }
 
-/* Human feedback (thumbs) — hidden in CSS; custom.js also hides dynamic feedback controls */
+/* Human feedback (thumbs) — Chainlit uses positive/negative-feedback-* classes on icon buttons */
+button.positive-feedback-on,
+button.positive-feedback-off,
+button.negative-feedback-on,
+button.negative-feedback-off,
+.flex.items-center:has(button.positive-feedback-on),
+.flex.items-center:has(button.positive-feedback-off),
+.flex.items-center:has(button.negative-feedback-on),
+.flex.items-center:has(button.negative-feedback-off) {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Fallback: aria labels / lucide thumb icons (older Chainlit builds) */
 button[aria-label="Helpful"],
 button[aria-label="Not helpful"],
 button[aria-label="Edit feedback"],
 button[aria-label*="helpful" i],
 button[aria-label*="feedback" i],
+button:has(svg.lucide-thumbs-up),
+button:has(svg.lucide-thumbs-down),
 [data-testid*="feedback" i] {
   display: none !important;
   pointer-events: none !important;

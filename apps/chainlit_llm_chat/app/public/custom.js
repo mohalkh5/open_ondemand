@@ -134,26 +134,55 @@
     });
   }
 
+  function hideElement(el) {
+    if (!el) return;
+    el.style.setProperty("display", "none", "important");
+    el.style.setProperty("visibility", "hidden", "important");
+    el.style.setProperty("pointer-events", "none", "important");
+    el.setAttribute("hidden", "true");
+    el.setAttribute("aria-hidden", "true");
+  }
+
+  function isFeedbackButton(btn) {
+    if (!btn || btn.tagName !== "BUTTON") return false;
+    var cls = btn.className || "";
+    if (
+      cls.indexOf("positive-feedback-on") !== -1 ||
+      cls.indexOf("positive-feedback-off") !== -1 ||
+      cls.indexOf("negative-feedback-on") !== -1 ||
+      cls.indexOf("negative-feedback-off") !== -1
+    ) {
+      return true;
+    }
+    var label = (
+      btn.getAttribute("aria-label") ||
+      btn.getAttribute("title") ||
+      ""
+    ).toLowerCase();
+    if (label.indexOf("helpful") !== -1 || label.indexOf("feedback") !== -1) {
+      return true;
+    }
+    var svg = btn.querySelector("svg");
+    if (!svg) return false;
+    var svgCls = (svg.getAttribute("class") || "").toLowerCase();
+    return svgCls.indexOf("thumbs-up") !== -1 || svgCls.indexOf("thumbs-down") !== -1;
+  }
+
   /** Hide human feedback buttons (thumbs up/down on assistant messages). */
   function hideFeedbackControls() {
     document.querySelectorAll("button").forEach(function (btn) {
-      var label = (
-        btn.getAttribute("aria-label") ||
-        btn.getAttribute("title") ||
-        ""
-      ).toLowerCase();
-      if (label.indexOf("helpful") !== -1 || label.indexOf("feedback") !== -1) {
-        btn.style.display = "none";
-        btn.style.visibility = "hidden";
-        btn.setAttribute("hidden", "true");
-        btn.disabled = true;
-        btn.setAttribute("aria-hidden", "true");
+      if (isFeedbackButton(btn)) {
+        hideElement(btn);
+        var row = btn.closest(".flex.items-center");
+        if (
+          row &&
+          row.querySelector("button.positive-feedback-on, button.positive-feedback-off, button.negative-feedback-on, button.negative-feedback-off")
+        ) {
+          hideElement(row);
+        }
       }
     });
-    document.querySelectorAll('[data-testid*="feedback" i]').forEach(function (el) {
-      el.style.display = "none";
-      el.style.visibility = "hidden";
-    });
+    document.querySelectorAll('[data-testid*="feedback" i]').forEach(hideElement);
   }
 
   function hideCurcDisabledControls() {
