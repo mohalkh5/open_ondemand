@@ -1,4 +1,4 @@
-# LLM chatbot (Chainlit) for CURC / Open OnDemand
+# LLM chatbot (Chainlit) for CURC Open OnDemand
 
 This repository packages a Chainlit chat UI that talks to **Ollama**, persists chat history in **SQLite** (via a Chainlit data layer), and is meant to run on **CU Research Computing** resources behind **Open OnDemand**.
 
