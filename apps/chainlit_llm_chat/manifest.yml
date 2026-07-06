@@ -1,0 +1,13 @@
+---
+name: LLM Chat Interface
+category: Interactive Apps
+subcategory: Servers
+role: batch_connect
+description: |
+  **Beta application** 
+  
+  This interactive app provides a browser-based LLM chat interface using [Chainlit](https://docs.chainlit.io) and [Ollama](https://ollama.com). Each session starts an Ollama server on the requested compute node connected to CURC-hosted models or your own Ollama model directory.
+    
+  Please note: When a session is launched with **Preset configuration**, the job is submitted to Alpine testing hardware (`aa100` partition and `gpu-testing` QoS). Testing resources are shared and **limited in capacity**, so sessions may queue during high demand. For longer runtimes or heavier workloads, use **Custom configuration** and request appropriate resources (jobs will be subject to queue waits and may not start immediately).
+
+  For more information on this application, refer to our [LLM Chat Interface](https://curc.readthedocs.io/en/latest/open_ondemand/llm_chat_interface.html) documentation.

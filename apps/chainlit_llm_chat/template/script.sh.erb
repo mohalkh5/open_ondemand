@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+export XDG_RUNTIME_DIR="/tmp/${UID}"
+
+echo $port, $host
+module load uv
+source /curc/sw/uv_env/llm-chatbot-env/bin/activate
+
+model_path=<%= context.model_path.to_s.inspect %>
+# Strip off ' and " from the end of the provided value (if they exist)
+model_path="${model_path%[\"\']}"
+
+# Strip off ' and " from the start of the provided value (if they exist)
+model_path="${model_path#[\"\']}"
+
+if [[ "${model_path}" == "CURC LLM Models" ]]
+then
+  ml ollama
+else
+  export OLLAMA_MODELS="${model_path}"
+  ml ollama
+fi
+
+# Location of chat history (use projects instead of scratch)
+export CHAINLIT_DATA_DIR="/projects/${USER}/.chainlit_data"
+
+CHAINLIT_APP_DIR="<%= session.app.root.join('app').realpath %>"
+if [[ ! -f "${CHAINLIT_APP_DIR}/app.py" ]]; then
+  echo "ERROR: Chainlit app not found at ${CHAINLIT_APP_DIR}/app.py"
+  exit 1
+fi
+
+sleep 5
+
+cd "${CHAINLIT_APP_DIR}"
+chainlit run --root-path /node/${host}/${port} --port $port --debug --host $(hostname -I) app.py

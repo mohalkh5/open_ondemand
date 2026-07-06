@@ -1,0 +1,5 @@
+chainlit>=2.0.0
+ollama>=0.3.0
+aiosqlite>=0.20.0
+Pillow>=10.0.0
+PyPDF2>=3.0.0

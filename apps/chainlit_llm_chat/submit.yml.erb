@@ -1,0 +1,55 @@
+<%-
+
+  # Initialize an empty array to hold Slurm arguments
+  base_slurm_args = ["--nodes=1", "--partition=aa100", "--qos=gpu-testing"]
+
+  if config_type == "presets"
+    case preset_configuration
+      when "10x1x1alpine"
+        base_slurm_args += ["--ntasks=10", "--time=1:00:00", "--gres=gpu:a100_3g.20gb:1"]
+      else
+        base_slurm_args
+    end
+  end
+
+-%>
+---
+
+<% if config_type == "presets" -%>
+
+cluster: "alpine"
+script:
+  copy_environment: true
+  native:
+    <% base_slurm_args.each do |arg| %>
+      - <%= arg %>
+    <% end %>
+
+<% else -%>
+
+script:
+  copy_environment: true
+  native:
+    - "--nodes=1"
+    - "--ntasks=<%= num_cores %>"
+    - "--account=<%= account %>"
+    - "--partition=<%= partition_name %>"
+    - "--qos=<%= qos_name %>"
+    - "--time=<%= num_hours %>:00:00"
+    <% if reservation.downcase != "none" %>
+    - "--reservation=<%= reservation %>"
+    <% end %>
+    <% if gres.downcase != "none" %>
+    - "--gres=<%= gres %>"
+    <% end %>
+    <% if nodelist.downcase != "none" %>
+    - "--nodelist=<%= nodelist %>"
+    <% end %>
+    <% if constraint.downcase != "none" %>
+    - "--constraint=<%= constraint %>"
+    <% end %>
+
+<% end -%>
+
+batch_connect:
+  template: "basic"
