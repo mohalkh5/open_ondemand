@@ -402,6 +402,11 @@
     img.style.removeProperty("max-height");
     img.style.setProperty("object-fit", "contain", "important");
 
+    screen.style.setProperty("margin-top", "0", "important");
+    screen.style.setProperty("padding-top", "1.75rem", "important");
+    screen.style.setProperty("justify-content", "flex-start", "important");
+    screen.style.setProperty("overflow", "visible", "important");
+
     var node = img.parentElement;
     var depth = 0;
     while (node && node !== screen && depth < 3) {
