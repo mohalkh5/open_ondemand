@@ -2,8 +2,8 @@
 Resolve and validate Alpine/CURC filesystem paths for chat attachments.
 
 Users attach files by pasting absolute paths in messages (no browser upload).
-Paths may live in any CURC filesystem location the user can read (including
-files shared by other users under /projects/, /scratch/, etc.).
+Paths may live in any location the job process can read (including shared
+files under another user's /projects/ or /scratch/alpine/ tree).
 """
 
 import logging
@@ -31,15 +31,6 @@ def get_username() -> str:
     return os.getenv("USER") or os.getenv("USERNAME") or "unknown"
 
 
-def _is_on_curc_filesystem(path: Path) -> bool:
-    """True when *path* is on a known CURC Alpine filesystem mount."""
-    resolved = str(path.resolve())
-    return any(
-        resolved == prefix.rstrip("/") or resolved.startswith(prefix)
-        for prefix in _HPC_PATH_PREFIXES
-    )
-
-
 def _assert_readable_file(resolved: Path, display_path: str) -> None:
     """Raise ValueError when the job process cannot read *resolved*."""
     try:
@@ -54,7 +45,7 @@ def _assert_readable_file(resolved: Path, display_path: str) -> None:
 
 
 def validate_hpc_path(raw_path: str, username: Optional[str] = None) -> Path:
-    """Resolve *raw_path* and ensure it is a readable file on CURC filesystems."""
+    """Resolve *raw_path* and ensure the job process can read it as a file."""
     username = username or get_username()
 
     expanded = os.path.expanduser(raw_path.strip())
@@ -67,12 +58,6 @@ def validate_hpc_path(raw_path: str, username: Optional[str] = None) -> Path:
         raise ValueError(f"Path must be absolute on Alpine: {raw_path}")
 
     resolved = path.resolve()
-
-    if not _is_on_curc_filesystem(resolved):
-        roots_display = ", ".join(_HPC_PATH_PREFIXES)
-        raise ValueError(
-            f"Path must be on a CURC filesystem ({roots_display}): {raw_path}"
-        )
 
     if not resolved.exists():
         raise ValueError(f"File not found: {raw_path}")
@@ -109,7 +94,7 @@ def extract_paths_from_message(content: str) -> Tuple[str, List[str]]:
 
     Supported forms:
       - ``/file /projects/user/a.pdf /projects/otheruser/b.py``
-      - One absolute path per line (under CURC filesystem prefixes)
+      - One absolute path per line (common Alpine path prefixes)
     """
     if not content:
         return "", []
