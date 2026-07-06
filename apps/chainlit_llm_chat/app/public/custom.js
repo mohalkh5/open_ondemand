@@ -376,16 +376,47 @@
     if (!img) {
       return;
     }
-    var theme = isDarkTheme() ? "dark" : "light";
-    if (img.getAttribute("data-curc-logo-theme") === theme) {
-      return;
+
+    function stripSquareLogoSizing(el) {
+      if (!el || !el.className) {
+        return;
+      }
+      el.className = el.className
+        .replace(/\bh-\[[^\]]+\]/g, "")
+        .replace(/\bw-\[[^\]]+\]/g, "")
+        .replace(/\bh-\d+/g, "")
+        .replace(/\bw-\d+/g, "")
+        .replace(/\bobject-cover\b/g, "")
+        .replace(/\bobject-fill\b/g, "")
+        .replace(/\boverflow-hidden\b/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
     }
-    var base = window.location.pathname.replace(/\/?$/, "");
-    img.src = base + "/logo?theme=" + theme;
-    img.alt = "CURC LLM Chat";
-    img.setAttribute("data-curc-logo", "1");
-    img.setAttribute("data-curc-logo-theme", theme);
+
+    img.style.setProperty("width", "min(100%, 36rem)", "important");
+    img.style.setProperty("height", "auto", "important");
+    img.style.setProperty("max-height", "none", "important");
+    img.style.setProperty("object-fit", "contain", "important");
+    stripSquareLogoSizing(img);
     img.classList.add("curc-welcome-logo");
+
+    var wrapper = img.parentElement;
+    if (wrapper && wrapper !== screen) {
+      wrapper.style.setProperty("width", "min(100%, 36rem)", "important");
+      wrapper.style.setProperty("height", "auto", "important");
+      wrapper.style.setProperty("max-height", "none", "important");
+      wrapper.style.setProperty("overflow", "visible", "important");
+      stripSquareLogoSizing(wrapper);
+    }
+
+    var theme = isDarkTheme() ? "dark" : "light";
+    if (img.getAttribute("data-curc-logo-theme") !== theme) {
+      var base = window.location.pathname.replace(/\/?$/, "");
+      img.src = base + "/logo?theme=" + theme;
+      img.alt = "CURC LLM Chat";
+      img.setAttribute("data-curc-logo", "1");
+      img.setAttribute("data-curc-logo-theme", theme);
+    }
   }
 
   function pauseUiObserver() {

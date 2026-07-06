@@ -56,12 +56,32 @@ button:has(svg.lucide-thumbs-down),
   width: 100%;
   padding: 0 1rem 1.5rem;
   gap: 1.25rem !important;
+  overflow: visible !important;
 }
 
-#welcome-screen img,
-#welcome-screen svg[class*="logo"],
-#welcome-screen .w-\[200px\] {
-  max-width: 220px;
+/* CURC logo is a wide horizontal banner — override Chainlit's square logo box */
+#welcome-screen img.curc-welcome-logo,
+#welcome-screen img[data-curc-logo="1"],
+#welcome-screen > div:has(> img.curc-welcome-logo),
+#welcome-screen > div:has(> img[data-curc-logo="1"]) {
+  width: min(100%, 36rem) !important;
+  max-width: min(100%, 36rem) !important;
+  height: auto !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+
+#welcome-screen img.curc-welcome-logo,
+#welcome-screen img[data-curc-logo="1"] {
+  display: block;
+  object-fit: contain !important;
+  object-position: center center !important;
+  margin: 0 auto;
+}
+
+#welcome-screen svg[class*="logo"] {
+  max-width: min(100%, 36rem);
   height: auto;
 }
 
