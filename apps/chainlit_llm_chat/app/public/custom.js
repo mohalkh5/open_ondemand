@@ -255,14 +255,19 @@
   }
 
   function resolveModelNameForHint(profiles, cb) {
+    var fromHeader = readChatProfilesTriggerLabel();
+    if (fromHeader) {
+      cb(fromHeader);
+      return;
+    }
+
     if (profiles && profiles.length === 1) {
       cb(profiles[0].display_name || profiles[0].name || "");
       return;
     }
 
-    var fromHeader = readChatProfilesTriggerLabel();
-    if (fromHeader) {
-      cb(fromHeader);
+    if (lastModelHint) {
+      cb(lastModelHint);
       return;
     }
 
@@ -281,19 +286,15 @@
 
   function updateActiveModelHint(notice, modelName) {
     if (!modelName) {
-      lastModelHint = "";
-      var stale = notice.querySelector("#curc-active-model-hint");
-      if (stale) {
-        stale.remove();
-      }
       return;
     }
-    if (modelName === lastModelHint) {
+
+    var hint = notice.querySelector("#curc-active-model-hint");
+    if (modelName === lastModelHint && hint) {
       return;
     }
     lastModelHint = modelName;
 
-    var hint = notice.querySelector("#curc-active-model-hint");
     if (!hint) {
       hint = document.createElement("p");
       hint.id = "curc-active-model-hint";
@@ -308,19 +309,46 @@
       "Active Ollama model: <code>" + escapeHtml(modelName) + "</code>";
   }
 
+  function attachChatProfilesChangeListener() {
+    var trigger = document.getElementById("chat-profiles");
+    if (!trigger || trigger.getAttribute("data-curc-hint-hook") === "1") {
+      return;
+    }
+    trigger.setAttribute("data-curc-hint-hook", "1");
+    trigger.addEventListener("click", function () {
+      window.setTimeout(scheduleRefreshCurcUi, 50);
+      window.setTimeout(scheduleRefreshCurcUi, 250);
+    });
+
+    var profileObserver = new MutationObserver(scheduleRefreshCurcUi);
+    profileObserver.observe(trigger, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+  }
+
   /** Canonical CURC welcome disclaimer (empty-state screen only). */
   function ensureWelcomeNotice(modelName) {
     var screen = document.getElementById("welcome-screen");
     if (!screen) {
+      welcomeNoticeInstalled = false;
       return;
     }
+
+    if (!modelName && lastModelHint) {
+      modelName = lastModelHint;
+    }
+
     var existing = screen.querySelector("#curc-welcome-notice");
     if (existing) {
       updateActiveModelHint(existing, modelName);
+      welcomeNoticeInstalled = true;
       return;
     }
+
     if (welcomeNoticeInstalled) {
-      return;
+      welcomeNoticeInstalled = false;
     }
     var textarea = screen.querySelector("textarea");
     if (!textarea) {
@@ -462,6 +490,7 @@
       fetchChatProfiles(function (profiles) {
         resolveModelNameForHint(profiles, function (modelName) {
           ensureWelcomeNotice(modelName);
+          attachChatProfilesChangeListener();
           if (!modelName && modelHintRetries < MAX_MODEL_HINT_RETRIES) {
             modelHintRetries += 1;
             window.setTimeout(scheduleRefreshCurcUi, 400);
