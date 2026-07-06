@@ -132,16 +132,22 @@ html.dark [role="dialog"] .markdown a {
 
 .curc-active-model-hint {
   text-align: center;
-  margin: 0.75rem 0 0;
-  font-size: 0.8125rem;
-  color: hsl(var(--muted-foreground));
+  margin: 1rem 0 0;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--primary) / 0.45);
+  border-radius: calc(var(--radius) + 2px);
+  background: hsl(var(--primary) / 0.12);
 }
 
 .curc-active-model-hint code {
-  font-size: 0.9em;
-  padding: 0.1em 0.35em;
+  font-size: 1em;
+  font-weight: 700;
+  padding: 0.15em 0.45em;
   border-radius: calc(var(--radius) - 2px);
-  background: hsl(var(--muted) / 0.5);
+  background: hsl(var(--muted) / 0.55);
   color: hsl(var(--foreground));
 }
 

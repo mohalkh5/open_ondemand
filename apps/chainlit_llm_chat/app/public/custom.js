@@ -185,11 +185,14 @@
   }
 
   var cachedChatProfiles = null;
+  var cachedUiMeta = null;
   var welcomeNoticeInstalled = false;
   var lastModelHint = "";
   var uiPatchInProgress = false;
   var refreshScheduled = false;
   var uiObserver = null;
+  var modelHintRetries = 0;
+  var MAX_MODEL_HINT_RETRIES = 8;
 
   function appBasePath() {
     return window.location.pathname.replace(/\/?$/, "");
@@ -202,7 +205,7 @@
   }
 
   function fetchChatProfiles(cb) {
-    if (cachedChatProfiles) {
+    if (cachedChatProfiles && cachedChatProfiles.length > 0) {
       cb(cachedChatProfiles);
       return;
     }
@@ -211,12 +214,69 @@
         return res.ok ? res.json() : null;
       })
       .then(function (data) {
-        cachedChatProfiles = (data && data.chatProfiles) || [];
-        cb(cachedChatProfiles);
+        var profiles = (data && data.chatProfiles) || [];
+        if (profiles.length > 0) {
+          cachedChatProfiles = profiles;
+        }
+        cb(profiles);
       })
       .catch(function () {
         cb([]);
       });
+  }
+
+  function fetchUiMeta(cb) {
+    if (cachedUiMeta && cachedUiMeta.modelCount > 0) {
+      cb(cachedUiMeta);
+      return;
+    }
+    fetch(appBasePath() + "/curc/ui-meta", { credentials: "same-origin" })
+      .then(function (res) {
+        return res.ok ? res.json() : null;
+      })
+      .then(function (data) {
+        if (data && data.modelCount > 0) {
+          cachedUiMeta = data;
+        }
+        cb(data || {});
+      })
+      .catch(function () {
+        cb({});
+      });
+  }
+
+  function readChatProfilesTriggerLabel() {
+    var trigger = document.getElementById("chat-profiles");
+    if (!trigger) {
+      return "";
+    }
+    var label = trigger.querySelector(".line-clamp-1");
+    return (label ? label.textContent : trigger.textContent || "").trim();
+  }
+
+  function resolveModelNameForHint(profiles, cb) {
+    if (profiles && profiles.length === 1) {
+      cb(profiles[0].display_name || profiles[0].name || "");
+      return;
+    }
+
+    var fromHeader = readChatProfilesTriggerLabel();
+    if (fromHeader) {
+      cb(fromHeader);
+      return;
+    }
+
+    fetchUiMeta(function (meta) {
+      if (meta.modelCount === 1 && meta.defaultModel) {
+        cb(meta.defaultModel);
+        return;
+      }
+      if (meta.modelCount > 1 && meta.defaultModel) {
+        cb(meta.defaultModel);
+        return;
+      }
+      cb("");
+    });
   }
 
   function updateActiveModelHint(notice, modelName) {
@@ -356,11 +416,13 @@
       hideCurcDisabledControls();
       patchWelcomeLogo();
       fetchChatProfiles(function (profiles) {
-        var modelName = "";
-        if (profiles.length === 1) {
-          modelName = profiles[0].display_name || profiles[0].name || "";
-        }
-        ensureWelcomeNotice(modelName);
+        resolveModelNameForHint(profiles, function (modelName) {
+          ensureWelcomeNotice(modelName);
+          if (!modelName && modelHintRetries < MAX_MODEL_HINT_RETRIES) {
+            modelHintRetries += 1;
+            window.setTimeout(scheduleRefreshCurcUi, 400);
+          }
+        });
       });
     } finally {
       uiPatchInProgress = false;

@@ -16,6 +16,7 @@ from curc_chat.chainlit_handlers import (
 )
 from curc_chat import action_handlers  # noqa: F401 — registers @cl.action_callback hooks
 from curc_chat import starters  # noqa: F401 — registers @cl.set_starters
+from curc_chat import ui_meta  # noqa: F401 — registers /curc/ui-meta
 
 __all__ = [
     "header_auth_callback",
