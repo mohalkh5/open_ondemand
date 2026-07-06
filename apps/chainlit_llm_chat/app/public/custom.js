@@ -384,6 +384,8 @@
       el.className = el.className
         .replace(/\bh-\[[^\]]+\]/g, "")
         .replace(/\bw-\[[^\]]+\]/g, "")
+        .replace(/\bmax-h-\[[^\]]+\]/g, "")
+        .replace(/\bmax-h-\d+/g, "")
         .replace(/\bh-\d+/g, "")
         .replace(/\bw-\d+/g, "")
         .replace(/\bobject-cover\b/g, "")
@@ -393,20 +395,23 @@
         .trim();
     }
 
-    img.style.setProperty("width", "min(100%, 36rem)", "important");
-    img.style.setProperty("height", "auto", "important");
-    img.style.setProperty("max-height", "none", "important");
-    img.style.setProperty("object-fit", "contain", "important");
     stripSquareLogoSizing(img);
     img.classList.add("curc-welcome-logo");
+    img.style.removeProperty("width");
+    img.style.removeProperty("height");
+    img.style.removeProperty("max-height");
+    img.style.setProperty("object-fit", "contain", "important");
 
-    var wrapper = img.parentElement;
-    if (wrapper && wrapper !== screen) {
-      wrapper.style.setProperty("width", "min(100%, 36rem)", "important");
-      wrapper.style.setProperty("height", "auto", "important");
-      wrapper.style.setProperty("max-height", "none", "important");
-      wrapper.style.setProperty("overflow", "visible", "important");
-      stripSquareLogoSizing(wrapper);
+    var node = img.parentElement;
+    var depth = 0;
+    while (node && node !== screen && depth < 3) {
+      stripSquareLogoSizing(node);
+      node.style.removeProperty("width");
+      node.style.removeProperty("height");
+      node.style.removeProperty("max-height");
+      node.style.setProperty("overflow", "visible", "important");
+      node = node.parentElement;
+      depth += 1;
     }
 
     var theme = isDarkTheme() ? "dark" : "light";
