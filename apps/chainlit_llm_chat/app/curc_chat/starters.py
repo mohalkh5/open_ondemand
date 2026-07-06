@@ -12,14 +12,6 @@ CODING_STARTERS = [
         icon="/public/learn.svg",
     ),
     cl.Starter(
-        label="Plan a small project",
-        message=(
-            "Help me plan the structure for a small Python command-line tool. "
-            "Suggest a simple layout for source files, tests, and dependencies."
-        ),
-        icon="/public/workflow.svg",
-    ),
-    cl.Starter(
         label="Python best practices",
         message=(
             "What are good general practices for organizing a Python project? "
