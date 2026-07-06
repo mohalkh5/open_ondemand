@@ -6,7 +6,7 @@ echo $port, $host
 module load uv
 source /curc/sw/uv_env/llm-chatbot-env/bin/activate
 
-model_path="<%= context.model_path %>"
+model_path=<%= context.model_path.to_s.inspect %>
 # Strip off ' and " from the end of the provided value (if they exist)
 model_path="${model_path%[\"\']}"
 
